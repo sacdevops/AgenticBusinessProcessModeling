@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_0yojnjd">
+    <bpmn:participant id="PoolEmployee" name="Employee" processRef="Process_1" />
+    <bpmn:participant id="PoolHRPortal" name="HR Portal" processRef="Process_1ye2u7l" />
+    <bpmn:participant id="PoolSupervisor" name="Supervisor" processRef="Process_10rrkc8" />
+    <bpmn:participant id="PoolHRManager" name="HR Manager" processRef="Process_02cdaix" />
+    <bpmn:messageFlow id="Flow_1p8n8su" name="Vacation request" sourceRef="TaskSubmitRequest" targetRef="ReceiveVacationRequest" />
+    <bpmn:messageFlow id="Flow_1n40358" name="Rejection" sourceRef="SendAutoRejection" targetRef="PoolEmployee" />
+    <bpmn:messageFlow id="Flow_00fa158" name="Approval request" sourceRef="SendApprovalRequest" targetRef="PoolSupervisor" />
+    <bpmn:messageFlow id="Flow_1cblqx1" name="Approval" sourceRef="SendApprovalToEmployeeSup" targetRef="PoolEmployee" />
+    <bpmn:messageFlow id="Flow_1mttkt9" name="Rejection" sourceRef="SendRejectionToEmployeeSup" targetRef="PoolEmployee" />
+    <bpmn:messageFlow id="Flow_18squjb" name="Escalation" sourceRef="SendEscalation" targetRef="PoolHRManager" />
+    <bpmn:messageFlow id="Flow_0d4981i" name="Approval" sourceRef="SendApprovalToEmployeeMgr" targetRef="PoolEmployee" />
+    <bpmn:messageFlow id="Flow_1j0vapq" name="Rejection" sourceRef="SendRejectionToEmployeeMgr" targetRef="PoolEmployee" />
+    <bpmn:messageFlow id="Flow_1szmxgu" name="Approval" sourceRef="SendApprovalFromSupervisor" targetRef="CatchSupervisorFeedback" />
+    <bpmn:messageFlow id="Flow_1dx1ud0" name="Rejection" sourceRef="SendRejectionFromSupervisor" targetRef="CatchSupervisorFeedback" />
+    <bpmn:messageFlow id="Flow_1equ6gs" name="Approval" sourceRef="SendApprovalFromManager" targetRef="CatchManagerDecision" />
+    <bpmn:messageFlow id="Flow_0t4kksz" name="Rejection" sourceRef="SendRejectionFromManager" targetRef="CatchManagerDecision" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:startEvent id="StartNeedVacation" name="Need vacation">
+      <bpmn:outgoing>Flow_1bg87xx</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="TaskSubmitRequest" name="Submit request">
+      <bpmn:incoming>Flow_1bg87xx</bpmn:incoming>
+      <bpmn:outgoing>Flow_1i332vy</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:intermediateCatchEvent id="CatchDecision" name="Decision received">
+      <bpmn:incoming>Flow_1i332vy</bpmn:incoming>
+      <bpmn:outgoing>Flow_1y0ndhe</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0iseqlr" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="GwApprovedEmployee" name="Approved?">
+      <bpmn:incoming>Flow_1y0ndhe</bpmn:incoming>
+      <bpmn:outgoing>Flow_0upv5dv</bpmn:outgoing>
+      <bpmn:outgoing>Flow_12llups</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndVacationConfirmed" name="Vacation confirmed">
+      <bpmn:incoming>Flow_0upv5dv</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndRequestRejected" name="Request rejected">
+      <bpmn:incoming>Flow_12llups</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1bg87xx" sourceRef="StartNeedVacation" targetRef="TaskSubmitRequest" />
+    <bpmn:sequenceFlow id="Flow_1i332vy" sourceRef="TaskSubmitRequest" targetRef="CatchDecision" />
+    <bpmn:sequenceFlow id="Flow_1y0ndhe" sourceRef="CatchDecision" targetRef="GwApprovedEmployee" />
+    <bpmn:sequenceFlow id="Flow_0upv5dv" name="Yes" sourceRef="GwApprovedEmployee" targetRef="EndVacationConfirmed" />
+    <bpmn:sequenceFlow id="Flow_12llups" name="No" sourceRef="GwApprovedEmployee" targetRef="EndRequestRejected" />
+  </bpmn:process>
+  <bpmn:process id="Process_1ye2u7l">
+    <bpmn:startEvent id="StartDaily" name="Daily start">
+      <bpmn:outgoing>Flow_1ti0qeq</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:receiveTask id="ReceiveVacationRequest" name="Receive request">
+      <bpmn:incoming>Flow_1ti0qeq</bpmn:incoming>
+      <bpmn:outgoing>Flow_0jo29hv</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:serviceTask id="TaskCheckBalance" name="Check balance">
+      <bpmn:incoming>Flow_0jo29hv</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kot2jc</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GwEnoughDays" name="Enough days?">
+      <bpmn:incoming>Flow_0kot2jc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0waze9j</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1a1k41k</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="SendAutoRejection" name="Send rejection">
+      <bpmn:incoming>Flow_0waze9j</bpmn:incoming>
+      <bpmn:outgoing>Flow_0u5x2m3</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndAutoRejected" name="Auto rejected">
+      <bpmn:incoming>Flow_0u5x2m3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="SendApprovalRequest" name="Request approval">
+      <bpmn:incoming>Flow_1a1k41k</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ncupdk</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:eventBasedGateway id="GwWaitFeedback">
+      <bpmn:incoming>Flow_0ncupdk</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e5od50</bpmn:outgoing>
+      <bpmn:outgoing>Flow_17qah36</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="CatchSupervisorFeedback" name="Feedback received">
+      <bpmn:incoming>Flow_0e5od50</bpmn:incoming>
+      <bpmn:outgoing>Flow_1w2yg69</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0wvnduu" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="CatchFiveDays" name="5 days passed">
+      <bpmn:incoming>Flow_17qah36</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ruqpad</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_18ad4ks" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="GwSupervisorDecision" name="Approved?">
+      <bpmn:incoming>Flow_1w2yg69</bpmn:incoming>
+      <bpmn:outgoing>Flow_19ffffz</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1jl209b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="TaskBookVacationSup" name="Book vacation">
+      <bpmn:incoming>Flow_19ffffz</bpmn:incoming>
+      <bpmn:outgoing>Flow_1g9by36</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sendTask id="SendRejectionToEmployeeSup" name="Send rejection">
+      <bpmn:incoming>Flow_1jl209b</bpmn:incoming>
+      <bpmn:outgoing>Flow_0v6zxc8</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="SendApprovalToEmployeeSup" name="Send approval">
+      <bpmn:incoming>Flow_1g9by36</bpmn:incoming>
+      <bpmn:outgoing>Flow_1w7uzgg</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndApprovedBySupervisor" name="Approved (sup)">
+      <bpmn:incoming>Flow_1w7uzgg</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndRejectedBySupervisor" name="Rejected (sup)">
+      <bpmn:incoming>Flow_0v6zxc8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="SendEscalation" name="Send escalation">
+      <bpmn:incoming>Flow_0ruqpad</bpmn:incoming>
+      <bpmn:outgoing>Flow_1lsoild</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:intermediateCatchEvent id="CatchManagerDecision" name="Manager decision">
+      <bpmn:incoming>Flow_1lsoild</bpmn:incoming>
+      <bpmn:outgoing>Flow_118zqzu</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0giqlu3" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="GwManagerDecision" name="Approved?">
+      <bpmn:incoming>Flow_118zqzu</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q8mjtz</bpmn:outgoing>
+      <bpmn:outgoing>Flow_11a7mmc</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="TaskBookVacationMgr" name="Book vacation">
+      <bpmn:incoming>Flow_0q8mjtz</bpmn:incoming>
+      <bpmn:outgoing>Flow_18r3ayu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sendTask id="SendRejectionToEmployeeMgr" name="Send rejection">
+      <bpmn:incoming>Flow_11a7mmc</bpmn:incoming>
+      <bpmn:outgoing>Flow_09x14wg</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="SendApprovalToEmployeeMgr" name="Send approval">
+      <bpmn:incoming>Flow_18r3ayu</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wfr9ui</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndApprovedByManager" name="Approved (mgr)">
+      <bpmn:incoming>Flow_0wfr9ui</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndRejectedByManager" name="Rejected (mgr)">
+      <bpmn:incoming>Flow_09x14wg</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1ti0qeq" sourceRef="StartDaily" targetRef="ReceiveVacationRequest" />
+    <bpmn:sequenceFlow id="Flow_0jo29hv" sourceRef="ReceiveVacationRequest" targetRef="TaskCheckBalance" />
+    <bpmn:sequenceFlow id="Flow_0kot2jc" sourceRef="TaskCheckBalance" targetRef="GwEnoughDays" />
+    <bpmn:sequenceFlow id="Flow_0u5x2m3" sourceRef="SendAutoRejection" targetRef="EndAutoRejected" />
+    <bpmn:sequenceFlow id="Flow_0ncupdk" sourceRef="SendApprovalRequest" targetRef="GwWaitFeedback" />
+    <bpmn:sequenceFlow id="Flow_1w2yg69" sourceRef="CatchSupervisorFeedback" targetRef="GwSupervisorDecision" />
+    <bpmn:sequenceFlow id="Flow_0ruqpad" sourceRef="CatchFiveDays" targetRef="SendEscalation" />
+    <bpmn:sequenceFlow id="Flow_1g9by36" sourceRef="TaskBookVacationSup" targetRef="SendApprovalToEmployeeSup" />
+    <bpmn:sequenceFlow id="Flow_0v6zxc8" sourceRef="SendRejectionToEmployeeSup" targetRef="EndRejectedBySupervisor" />
+    <bpmn:sequenceFlow id="Flow_1w7uzgg" sourceRef="SendApprovalToEmployeeSup" targetRef="EndApprovedBySupervisor" />
+    <bpmn:sequenceFlow id="Flow_1lsoild" sourceRef="SendEscalation" targetRef="CatchManagerDecision" />
+    <bpmn:sequenceFlow id="Flow_118zqzu" sourceRef="CatchManagerDecision" targetRef="GwManagerDecision" />
+    <bpmn:sequenceFlow id="Flow_18r3ayu" sourceRef="TaskBookVacationMgr" targetRef="SendApprovalToEmployeeMgr" />
+    <bpmn:sequenceFlow id="Flow_09x14wg" sourceRef="SendRejectionToEmployeeMgr" targetRef="EndRejectedByManager" />
+    <bpmn:sequenceFlow id="Flow_0wfr9ui" sourceRef="SendApprovalToEmployeeMgr" targetRef="EndApprovedByManager" />
+    <bpmn:sequenceFlow id="Flow_0waze9j" name="No" sourceRef="GwEnoughDays" targetRef="SendAutoRejection" />
+    <bpmn:sequenceFlow id="Flow_1a1k41k" name="Yes" sourceRef="GwEnoughDays" targetRef="SendApprovalRequest" />
+    <bpmn:sequenceFlow id="Flow_0e5od50" sourceRef="GwWaitFeedback" targetRef="CatchSupervisorFeedback" />
+    <bpmn:sequenceFlow id="Flow_17qah36" sourceRef="GwWaitFeedback" targetRef="CatchFiveDays" />
+    <bpmn:sequenceFlow id="Flow_19ffffz" name="Yes" sourceRef="GwSupervisorDecision" targetRef="TaskBookVacationSup" />
+    <bpmn:sequenceFlow id="Flow_1jl209b" name="No" sourceRef="GwSupervisorDecision" targetRef="SendRejectionToEmployeeSup" />
+    <bpmn:sequenceFlow id="Flow_0q8mjtz" name="Yes" sourceRef="GwManagerDecision" targetRef="TaskBookVacationMgr" />
+    <bpmn:sequenceFlow id="Flow_11a7mmc" name="No" sourceRef="GwManagerDecision" targetRef="SendRejectionToEmployeeMgr" />
+  </bpmn:process>
+  <bpmn:process id="Process_10rrkc8">
+    <bpmn:startEvent id="StartDailySupervisor" name="Daily start">
+      <bpmn:outgoing>Flow_0xzsxng</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateCatchEvent id="CatchApprovalRequest" name="Approval request">
+      <bpmn:incoming>Flow_0xzsxng</bpmn:incoming>
+      <bpmn:outgoing>Flow_014awgr</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_04pnsgn" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="UserDecideSupervisor" name="Decide request">
+      <bpmn:incoming>Flow_014awgr</bpmn:incoming>
+      <bpmn:outgoing>Flow_1odlrt5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GwSupervisorApprove" name="Approve?">
+      <bpmn:incoming>Flow_1odlrt5</bpmn:incoming>
+      <bpmn:outgoing>Flow_0w61l34</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1g8upqp</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="SendApprovalFromSupervisor" name="Send approval">
+      <bpmn:incoming>Flow_0w61l34</bpmn:incoming>
+      <bpmn:outgoing>Flow_166iqst</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="SendRejectionFromSupervisor" name="Send rejection">
+      <bpmn:incoming>Flow_1g8upqp</bpmn:incoming>
+      <bpmn:outgoing>Flow_037a24e</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndSupervisorDone" name="Done">
+      <bpmn:incoming>Flow_166iqst</bpmn:incoming>
+      <bpmn:incoming>Flow_037a24e</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0xzsxng" sourceRef="StartDailySupervisor" targetRef="CatchApprovalRequest" />
+    <bpmn:sequenceFlow id="Flow_014awgr" sourceRef="CatchApprovalRequest" targetRef="UserDecideSupervisor" />
+    <bpmn:sequenceFlow id="Flow_1odlrt5" sourceRef="UserDecideSupervisor" targetRef="GwSupervisorApprove" />
+    <bpmn:sequenceFlow id="Flow_166iqst" sourceRef="SendApprovalFromSupervisor" targetRef="EndSupervisorDone" />
+    <bpmn:sequenceFlow id="Flow_037a24e" sourceRef="SendRejectionFromSupervisor" targetRef="EndSupervisorDone" />
+    <bpmn:sequenceFlow id="Flow_0w61l34" name="Yes" sourceRef="GwSupervisorApprove" targetRef="SendApprovalFromSupervisor" />
+    <bpmn:sequenceFlow id="Flow_1g8upqp" name="No" sourceRef="GwSupervisorApprove" targetRef="SendRejectionFromSupervisor" />
+  </bpmn:process>
+  <bpmn:process id="Process_02cdaix">
+    <bpmn:startEvent id="StartDailyManager" name="Daily start">
+      <bpmn:outgoing>Flow_03frg9d</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateCatchEvent id="CatchEscalation" name="Escalation received">
+      <bpmn:incoming>Flow_03frg9d</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ndcb5v</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_064isai" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="UserDecideManager" name="Make decision">
+      <bpmn:incoming>Flow_0ndcb5v</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ho0enk</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GwManagerApprove" name="Approve?">
+      <bpmn:incoming>Flow_1ho0enk</bpmn:incoming>
+      <bpmn:outgoing>Flow_1isaz6u</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0mdppmr</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="SendApprovalFromManager" name="Send approval">
+      <bpmn:incoming>Flow_1isaz6u</bpmn:incoming>
+      <bpmn:outgoing>Flow_129j73y</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="SendRejectionFromManager" name="Send rejection">
+      <bpmn:incoming>Flow_0mdppmr</bpmn:incoming>
+      <bpmn:outgoing>Flow_13q4aj2</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndManagerDone" name="Done">
+      <bpmn:incoming>Flow_129j73y</bpmn:incoming>
+      <bpmn:incoming>Flow_13q4aj2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_03frg9d" sourceRef="StartDailyManager" targetRef="CatchEscalation" />
+    <bpmn:sequenceFlow id="Flow_0ndcb5v" sourceRef="CatchEscalation" targetRef="UserDecideManager" />
+    <bpmn:sequenceFlow id="Flow_1ho0enk" sourceRef="UserDecideManager" targetRef="GwManagerApprove" />
+    <bpmn:sequenceFlow id="Flow_129j73y" sourceRef="SendApprovalFromManager" targetRef="EndManagerDone" />
+    <bpmn:sequenceFlow id="Flow_13q4aj2" sourceRef="SendRejectionFromManager" targetRef="EndManagerDone" />
+    <bpmn:sequenceFlow id="Flow_1isaz6u" name="Yes" sourceRef="GwManagerApprove" targetRef="SendApprovalFromManager" />
+    <bpmn:sequenceFlow id="Flow_0mdppmr" name="No" sourceRef="GwManagerApprove" targetRef="SendRejectionFromManager" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0yojnjd">
+      <bpmndi:BPMNShape id="Participant_1qjh643_di" bpmnElement="PoolEmployee" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="80" width="1500" height="220" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03iorpz_di" bpmnElement="StartNeedVacation">
+        <dc:Bounds x="202" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="185" y="185" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ehirav_di" bpmnElement="TaskSubmitRequest">
+        <dc:Bounds x="310" y="100" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ijyyhd_di" bpmnElement="CatchDecision">
+        <dc:Bounds x="522" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="497" y="185" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0karw53_di" bpmnElement="GwApprovedEmployee" isMarkerVisible="true">
+        <dc:Bounds x="675" y="135" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="734.5" y="153" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0gqlndq_di" bpmnElement="EndVacationConfirmed">
+        <dc:Bounds x="842" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="836" y="145" width="49" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0jwut59_di" bpmnElement="EndRequestRejected">
+        <dc:Bounds x="842" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="818" y="225" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1bg87xx_di" bpmnElement="Flow_1bg87xx">
+        <di:waypoint x="238" y="160" />
+        <di:waypoint x="270" y="160" />
+        <di:waypoint x="270" y="140" />
+        <di:waypoint x="310" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i332vy_di" bpmnElement="Flow_1i332vy">
+        <di:waypoint x="410" y="140" />
+        <di:waypoint x="470" y="140" />
+        <di:waypoint x="470" y="160" />
+        <di:waypoint x="522" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y0ndhe_di" bpmnElement="Flow_1y0ndhe">
+        <di:waypoint x="558" y="160" />
+        <di:waypoint x="675" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0upv5dv_di" bpmnElement="Flow_0upv5dv">
+        <di:waypoint x="700" y="135" />
+        <di:waypoint x="700" y="120" />
+        <di:waypoint x="842" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="706" y="125" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12llups_di" bpmnElement="Flow_12llups">
+        <di:waypoint x="700" y="185" />
+        <di:waypoint x="700" y="200" />
+        <di:waypoint x="842" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="708" y="190" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_1d4levr_di" bpmnElement="PoolHRPortal" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="270" width="2098" height="490" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1u9txmi_di" bpmnElement="StartDaily">
+        <dc:Bounds x="202" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="195" y="495" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0s9lu11_di" bpmnElement="ReceiveVacationRequest">
+        <dc:Bounds x="310" y="410" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1u2k5hm_di" bpmnElement="TaskCheckBalance">
+        <dc:Bounds x="470" y="410" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1oskeaw_di" bpmnElement="GwEnoughDays" isMarkerVisible="true">
+        <dc:Bounds x="645" y="440" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="704.5" y="458" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1arhtwv_di" bpmnElement="SendAutoRejection">
+        <dc:Bounds x="790" y="330" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1frqgym_di" bpmnElement="EndAutoRejected">
+        <dc:Bounds x="982" y="374" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="968" y="417" width="64" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lbo6b0_di" bpmnElement="SendApprovalRequest">
+        <dc:Bounds x="790" y="500" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0g51tj5_di" bpmnElement="GwWaitFeedback">
+        <dc:Bounds x="995" y="530" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1kevehd_di" bpmnElement="CatchSupervisorFeedback">
+        <dc:Bounds x="1162" y="482" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1155" y="444.5" width="49" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1x6ih07_di" bpmnElement="CatchFiveDays">
+        <dc:Bounds x="1162" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1145" y="635" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_06vkcx8_di" bpmnElement="GwSupervisorDecision" isMarkerVisible="true">
+        <dc:Bounds x="1315" y="475" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1314" y="532" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00xqf50_di" bpmnElement="TaskBookVacationSup">
+        <dc:Bounds x="1450" y="400" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1pxonlq_di" bpmnElement="SendRejectionToEmployeeSup">
+        <dc:Bounds x="1450" y="500" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0pd1haj_di" bpmnElement="SendApprovalToEmployeeSup">
+        <dc:Bounds x="1610" y="400" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0zbi780_di" bpmnElement="EndApprovedBySupervisor">
+        <dc:Bounds x="1802" y="444" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1783" y="487" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0eetti8_di" bpmnElement="EndRejectedBySupervisor">
+        <dc:Bounds x="1642" y="544" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1624" y="587" width="72" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_175kzbm_di" bpmnElement="SendEscalation">
+        <dc:Bounds x="1290" y="570" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1v4ye5p_di" bpmnElement="CatchManagerDecision">
+        <dc:Bounds x="1482" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1456" y="568" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_098qt0w_di" bpmnElement="GwManagerDecision" isMarkerVisible="true">
+        <dc:Bounds x="1635" y="585" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1634" y="642" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1u09m92_di" bpmnElement="TaskBookVacationMgr">
+        <dc:Bounds x="1770" y="510" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zz41bz_di" bpmnElement="SendRejectionToEmployeeMgr">
+        <dc:Bounds x="1770" y="620" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0z8o6tx_di" bpmnElement="SendApprovalToEmployeeMgr">
+        <dc:Bounds x="1930" y="510" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1frwjt0_di" bpmnElement="EndApprovedByManager">
+        <dc:Bounds x="2122" y="554" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2102" y="597" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_013l4r3_di" bpmnElement="EndRejectedByManager">
+        <dc:Bounds x="1962" y="664" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1943" y="707" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1ti0qeq_di" bpmnElement="Flow_1ti0qeq">
+        <di:waypoint x="238" y="470" />
+        <di:waypoint x="270" y="470" />
+        <di:waypoint x="270" y="450" />
+        <di:waypoint x="310" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jo29hv_di" bpmnElement="Flow_0jo29hv">
+        <di:waypoint x="410" y="450" />
+        <di:waypoint x="470" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kot2jc_di" bpmnElement="Flow_0kot2jc">
+        <di:waypoint x="570" y="450" />
+        <di:waypoint x="610" y="450" />
+        <di:waypoint x="610" y="465" />
+        <di:waypoint x="645" y="465" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u5x2m3_di" bpmnElement="Flow_0u5x2m3">
+        <di:waypoint x="890" y="370" />
+        <di:waypoint x="940" y="370" />
+        <di:waypoint x="940" y="392" />
+        <di:waypoint x="982" y="392" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ncupdk_di" bpmnElement="Flow_0ncupdk">
+        <di:waypoint x="890" y="540" />
+        <di:waypoint x="940" y="540" />
+        <di:waypoint x="940" y="555" />
+        <di:waypoint x="995" y="555" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1w2yg69_di" bpmnElement="Flow_1w2yg69">
+        <di:waypoint x="1198" y="500" />
+        <di:waypoint x="1315" y="500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ruqpad_di" bpmnElement="Flow_0ruqpad">
+        <di:waypoint x="1198" y="610" />
+        <di:waypoint x="1290" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g9by36_di" bpmnElement="Flow_1g9by36">
+        <di:waypoint x="1550" y="440" />
+        <di:waypoint x="1610" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0v6zxc8_di" bpmnElement="Flow_0v6zxc8">
+        <di:waypoint x="1550" y="540" />
+        <di:waypoint x="1600" y="540" />
+        <di:waypoint x="1600" y="562" />
+        <di:waypoint x="1642" y="562" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1w7uzgg_di" bpmnElement="Flow_1w7uzgg">
+        <di:waypoint x="1710" y="440" />
+        <di:waypoint x="1760" y="440" />
+        <di:waypoint x="1760" y="462" />
+        <di:waypoint x="1802" y="462" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1lsoild_di" bpmnElement="Flow_1lsoild">
+        <di:waypoint x="1390" y="610" />
+        <di:waypoint x="1482" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_118zqzu_di" bpmnElement="Flow_118zqzu">
+        <di:waypoint x="1518" y="610" />
+        <di:waypoint x="1635" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18r3ayu_di" bpmnElement="Flow_18r3ayu">
+        <di:waypoint x="1870" y="550" />
+        <di:waypoint x="1930" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09x14wg_di" bpmnElement="Flow_09x14wg">
+        <di:waypoint x="1870" y="660" />
+        <di:waypoint x="1920" y="660" />
+        <di:waypoint x="1920" y="682" />
+        <di:waypoint x="1962" y="682" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wfr9ui_di" bpmnElement="Flow_0wfr9ui">
+        <di:waypoint x="2030" y="550" />
+        <di:waypoint x="2080" y="550" />
+        <di:waypoint x="2080" y="572" />
+        <di:waypoint x="2122" y="572" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0waze9j_di" bpmnElement="Flow_0waze9j">
+        <di:waypoint x="670" y="440" />
+        <di:waypoint x="670" y="370" />
+        <di:waypoint x="790" y="370" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="678" y="402" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1a1k41k_di" bpmnElement="Flow_1a1k41k">
+        <di:waypoint x="670" y="490" />
+        <di:waypoint x="670" y="540" />
+        <di:waypoint x="790" y="540" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="676" y="512" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e5od50_di" bpmnElement="Flow_0e5od50">
+        <di:waypoint x="1020" y="530" />
+        <di:waypoint x="1020" y="500" />
+        <di:waypoint x="1162" y="500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17qah36_di" bpmnElement="Flow_17qah36">
+        <di:waypoint x="1020" y="580" />
+        <di:waypoint x="1020" y="610" />
+        <di:waypoint x="1162" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19ffffz_di" bpmnElement="Flow_19ffffz">
+        <di:waypoint x="1340" y="475" />
+        <di:waypoint x="1340" y="440" />
+        <di:waypoint x="1450" y="440" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1346" y="455" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jl209b_di" bpmnElement="Flow_1jl209b">
+        <di:waypoint x="1365" y="500" />
+        <di:waypoint x="1410" y="500" />
+        <di:waypoint x="1410" y="540" />
+        <di:waypoint x="1450" y="540" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1418" y="517" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q8mjtz_di" bpmnElement="Flow_0q8mjtz">
+        <di:waypoint x="1660" y="585" />
+        <di:waypoint x="1660" y="550" />
+        <di:waypoint x="1770" y="550" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1666" y="565" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11a7mmc_di" bpmnElement="Flow_11a7mmc">
+        <di:waypoint x="1685" y="610" />
+        <di:waypoint x="1730" y="610" />
+        <di:waypoint x="1730" y="660" />
+        <di:waypoint x="1770" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1738" y="632" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_0ijkdiw_di" bpmnElement="PoolSupervisor" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="710" width="1500" height="220" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1y57uht_di" bpmnElement="StartDailySupervisor">
+        <dc:Bounds x="202" y="782" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="195" y="825" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1li3bzv_di" bpmnElement="CatchApprovalRequest">
+        <dc:Bounds x="342" y="802" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="318" y="845" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_01lmdmq_di" bpmnElement="UserDecideSupervisor">
+        <dc:Bounds x="470" y="760" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1l0locx_di" bpmnElement="GwSupervisorApprove" isMarkerVisible="true">
+        <dc:Bounds x="645" y="790" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="647" y="847" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0lpf4xw_di" bpmnElement="SendApprovalFromSupervisor">
+        <dc:Bounds x="790" y="720" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0msf6m3_di" bpmnElement="SendRejectionFromSupervisor">
+        <dc:Bounds x="790" y="820" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_06995uy_di" bpmnElement="EndSupervisorDone">
+        <dc:Bounds x="982" y="804" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="987" y="847" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0xzsxng_di" bpmnElement="Flow_0xzsxng">
+        <di:waypoint x="238" y="800" />
+        <di:waypoint x="290" y="800" />
+        <di:waypoint x="290" y="820" />
+        <di:waypoint x="342" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_014awgr_di" bpmnElement="Flow_014awgr">
+        <di:waypoint x="378" y="820" />
+        <di:waypoint x="420" y="820" />
+        <di:waypoint x="420" y="800" />
+        <di:waypoint x="470" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1odlrt5_di" bpmnElement="Flow_1odlrt5">
+        <di:waypoint x="570" y="800" />
+        <di:waypoint x="610" y="800" />
+        <di:waypoint x="610" y="815" />
+        <di:waypoint x="645" y="815" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_166iqst_di" bpmnElement="Flow_166iqst">
+        <di:waypoint x="890" y="760" />
+        <di:waypoint x="940" y="760" />
+        <di:waypoint x="940" y="822" />
+        <di:waypoint x="982" y="822" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_037a24e_di" bpmnElement="Flow_037a24e">
+        <di:waypoint x="890" y="860" />
+        <di:waypoint x="940" y="860" />
+        <di:waypoint x="940" y="822" />
+        <di:waypoint x="982" y="822" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0w61l34_di" bpmnElement="Flow_0w61l34">
+        <di:waypoint x="670" y="790" />
+        <di:waypoint x="670" y="760" />
+        <di:waypoint x="790" y="760" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="676" y="772" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g8upqp_di" bpmnElement="Flow_1g8upqp">
+        <di:waypoint x="695" y="815" />
+        <di:waypoint x="740" y="815" />
+        <di:waypoint x="740" y="860" />
+        <di:waypoint x="790" y="860" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="748" y="835" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_10tm5m5_di" bpmnElement="PoolHRManager" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="960" width="1500" height="220" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bszmr0_di" bpmnElement="StartDailyManager">
+        <dc:Bounds x="202" y="1032" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="195" y="1075" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1rygiuq_di" bpmnElement="CatchEscalation">
+        <dc:Bounds x="342" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="335" y="1095" width="51" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06xg44z_di" bpmnElement="UserDecideManager">
+        <dc:Bounds x="470" y="1010" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1c4vqeo_di" bpmnElement="GwManagerApprove" isMarkerVisible="true">
+        <dc:Bounds x="645" y="1040" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="647" y="1097" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zeflr2_di" bpmnElement="SendApprovalFromManager">
+        <dc:Bounds x="790" y="970" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_19wdvbo_di" bpmnElement="SendRejectionFromManager">
+        <dc:Bounds x="790" y="1070" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0n27fot_di" bpmnElement="EndManagerDone">
+        <dc:Bounds x="982" y="1054" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="987" y="1097" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_03frg9d_di" bpmnElement="Flow_03frg9d">
+        <di:waypoint x="238" y="1050" />
+        <di:waypoint x="290" y="1050" />
+        <di:waypoint x="290" y="1070" />
+        <di:waypoint x="342" y="1070" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ndcb5v_di" bpmnElement="Flow_0ndcb5v">
+        <di:waypoint x="378" y="1070" />
+        <di:waypoint x="420" y="1070" />
+        <di:waypoint x="420" y="1050" />
+        <di:waypoint x="470" y="1050" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ho0enk_di" bpmnElement="Flow_1ho0enk">
+        <di:waypoint x="570" y="1050" />
+        <di:waypoint x="610" y="1050" />
+        <di:waypoint x="610" y="1065" />
+        <di:waypoint x="645" y="1065" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_129j73y_di" bpmnElement="Flow_129j73y">
+        <di:waypoint x="890" y="1010" />
+        <di:waypoint x="940" y="1010" />
+        <di:waypoint x="940" y="1072" />
+        <di:waypoint x="982" y="1072" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13q4aj2_di" bpmnElement="Flow_13q4aj2">
+        <di:waypoint x="890" y="1110" />
+        <di:waypoint x="940" y="1110" />
+        <di:waypoint x="940" y="1072" />
+        <di:waypoint x="982" y="1072" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1isaz6u_di" bpmnElement="Flow_1isaz6u">
+        <di:waypoint x="670" y="1040" />
+        <di:waypoint x="670" y="1010" />
+        <di:waypoint x="790" y="1010" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="676" y="1022" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mdppmr_di" bpmnElement="Flow_0mdppmr">
+        <di:waypoint x="695" y="1065" />
+        <di:waypoint x="740" y="1065" />
+        <di:waypoint x="740" y="1110" />
+        <di:waypoint x="790" y="1110" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="748" y="1085" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p8n8su_di" bpmnElement="Flow_1p8n8su">
+        <di:waypoint x="360" y="180" />
+        <di:waypoint x="360" y="410" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="334" y="292" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n40358_di" bpmnElement="Flow_1n40358">
+        <di:waypoint x="840" y="330" />
+        <di:waypoint x="840" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="832" y="312" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00fa158_di" bpmnElement="Flow_00fa158">
+        <di:waypoint x="840" y="580" />
+        <di:waypoint x="840" y="710" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="813" y="642" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cblqx1_di" bpmnElement="Flow_1cblqx1">
+        <di:waypoint x="1660" y="400" />
+        <di:waypoint x="1660" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1654" y="347" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mttkt9_di" bpmnElement="Flow_1mttkt9">
+        <di:waypoint x="1500" y="500" />
+        <di:waypoint x="1500" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1492" y="397" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18squjb_di" bpmnElement="Flow_18squjb">
+        <di:waypoint x="1340" y="650" />
+        <di:waypoint x="1340" y="960" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1330" y="802" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0d4981i_di" bpmnElement="Flow_0d4981i">
+        <di:waypoint x="1980" y="510" />
+        <di:waypoint x="1980" y="410" />
+        <di:waypoint x="910" y="410" />
+        <di:waypoint x="910" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1424" y="392" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1j0vapq_di" bpmnElement="Flow_1j0vapq">
+        <di:waypoint x="1820" y="620" />
+        <di:waypoint x="1820" y="460" />
+        <di:waypoint x="910" y="460" />
+        <di:waypoint x="910" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1342" y="442" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1szmxgu_di" bpmnElement="Flow_1szmxgu">
+        <di:waypoint x="840" y="720" />
+        <di:waypoint x="840" y="620" />
+        <di:waypoint x="1180" y="620" />
+        <di:waypoint x="1180" y="518" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="989" y="602" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dx1ud0_di" bpmnElement="Flow_1dx1ud0">
+        <di:waypoint x="840" y="820" />
+        <di:waypoint x="840" y="670" />
+        <di:waypoint x="1180" y="670" />
+        <di:waypoint x="1180" y="518" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="987" y="652" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1equ6gs_di" bpmnElement="Flow_1equ6gs">
+        <di:waypoint x="840" y="970" />
+        <di:waypoint x="840" y="800" />
+        <di:waypoint x="1500" y="800" />
+        <di:waypoint x="1500" y="628" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1149" y="782" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0t4kksz_di" bpmnElement="Flow_0t4kksz">
+        <di:waypoint x="840" y="1070" />
+        <di:waypoint x="840" y="850" />
+        <di:waypoint x="1500" y="850" />
+        <di:waypoint x="1500" y="628" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1147" y="832" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

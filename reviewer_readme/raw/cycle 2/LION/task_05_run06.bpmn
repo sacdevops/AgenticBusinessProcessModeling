@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1o8abme">
+    <bpmn:participant id="PoolCompany" name="Company" processRef="Process_1" />
+    <bpmn:participant id="PoolSupplierStd" name="Standard Supplier" />
+    <bpmn:participant id="PoolSupplierAlt" name="Alternative Supplier" />
+    <bpmn:messageFlow id="Flow_0x0p88g" name="Order request" sourceRef="TaskSendStdRequest" targetRef="PoolSupplierStd" />
+    <bpmn:messageFlow id="Flow_1nz6r2v" name="Confirmation" sourceRef="PoolSupplierStd" targetRef="CatchStdConfirm" />
+    <bpmn:messageFlow id="Flow_0xln3r5" name="Rejection" sourceRef="PoolSupplierStd" targetRef="CatchStdReject" />
+    <bpmn:messageFlow id="Flow_1c357fl" name="Order" sourceRef="TaskSendAltOrder" targetRef="PoolSupplierAlt" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_0o0j6ex">
+      <bpmn:lane id="LaneSystem" name="System">
+        <bpmn:flowNodeRef>StartQuarter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskCheckInventory</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwLowStock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndNoAction</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskSendStdRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwWaitStd</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchStdConfirm</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchStdReject</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndConfirmed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndCancelled</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="LaneAdministration" name="Administration">
+        <bpmn:flowNodeRef>CatchStdTimeout</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskManualIntervene</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwUseAlternative</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskSendAltOrder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndAltOrdered</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartQuarter" name="Quarter start">
+      <bpmn:outgoing>Flow_1ar4xf5</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_05q5or2" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="TaskCheckInventory" name="Check inventory">
+      <bpmn:incoming>Flow_1ar4xf5</bpmn:incoming>
+      <bpmn:outgoing>Flow_168w5y9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GwLowStock" name="Low stock?">
+      <bpmn:incoming>Flow_168w5y9</bpmn:incoming>
+      <bpmn:outgoing>Flow_1q3mnko</bpmn:outgoing>
+      <bpmn:outgoing>Flow_11qjmv1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndNoAction" name="No action">
+      <bpmn:incoming>Flow_1q3mnko</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="TaskSendStdRequest" name="Send request">
+      <bpmn:incoming>Flow_11qjmv1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0je1ztp</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:eventBasedGateway id="GwWaitStd">
+      <bpmn:incoming>Flow_0je1ztp</bpmn:incoming>
+      <bpmn:outgoing>Flow_03pakny</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1xngvx4</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0m436xm</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="CatchStdConfirm" name="Confirmation">
+      <bpmn:incoming>Flow_03pakny</bpmn:incoming>
+      <bpmn:outgoing>Flow_00k95g1</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1cznbv7" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="CatchStdReject" name="Rejection">
+      <bpmn:incoming>Flow_1xngvx4</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c83r6g</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0maomnk" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="CatchStdTimeout" name="3 days">
+      <bpmn:incoming>Flow_0m436xm</bpmn:incoming>
+      <bpmn:outgoing>Flow_1upkg4o</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0y2uue5" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="EndConfirmed" name="Order confirmed">
+      <bpmn:incoming>Flow_00k95g1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="TaskManualIntervene" name="Check alternative">
+      <bpmn:incoming>Flow_1c83r6g</bpmn:incoming>
+      <bpmn:incoming>Flow_1upkg4o</bpmn:incoming>
+      <bpmn:outgoing>Flow_0x8xdk3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GwUseAlternative" name="Use alternative?">
+      <bpmn:incoming>Flow_0x8xdk3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ws3ps1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_02lkipq</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndCancelled" name="Order cancelled">
+      <bpmn:incoming>Flow_0ws3ps1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="TaskSendAltOrder" name="Send order">
+      <bpmn:incoming>Flow_02lkipq</bpmn:incoming>
+      <bpmn:outgoing>Flow_0tjut40</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndAltOrdered" name="Alt ordered">
+      <bpmn:incoming>Flow_0tjut40</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1ar4xf5" sourceRef="StartQuarter" targetRef="TaskCheckInventory" />
+    <bpmn:sequenceFlow id="Flow_168w5y9" sourceRef="TaskCheckInventory" targetRef="GwLowStock" />
+    <bpmn:sequenceFlow id="Flow_00k95g1" sourceRef="CatchStdConfirm" targetRef="EndConfirmed" />
+    <bpmn:sequenceFlow id="Flow_1c83r6g" sourceRef="CatchStdReject" targetRef="TaskManualIntervene" />
+    <bpmn:sequenceFlow id="Flow_1upkg4o" sourceRef="CatchStdTimeout" targetRef="TaskManualIntervene" />
+    <bpmn:sequenceFlow id="Flow_0x8xdk3" sourceRef="TaskManualIntervene" targetRef="GwUseAlternative" />
+    <bpmn:sequenceFlow id="Flow_0tjut40" sourceRef="TaskSendAltOrder" targetRef="EndAltOrdered" />
+    <bpmn:sequenceFlow id="Flow_1q3mnko" name="No" sourceRef="GwLowStock" targetRef="EndNoAction" />
+    <bpmn:sequenceFlow id="Flow_11qjmv1" name="Yes" sourceRef="GwLowStock" targetRef="TaskSendStdRequest" />
+    <bpmn:sequenceFlow id="Flow_0je1ztp" sourceRef="TaskSendStdRequest" targetRef="GwWaitStd" />
+    <bpmn:sequenceFlow id="Flow_03pakny" sourceRef="GwWaitStd" targetRef="CatchStdConfirm" />
+    <bpmn:sequenceFlow id="Flow_1xngvx4" sourceRef="GwWaitStd" targetRef="CatchStdReject" />
+    <bpmn:sequenceFlow id="Flow_0m436xm" sourceRef="GwWaitStd" targetRef="CatchStdTimeout" />
+    <bpmn:sequenceFlow id="Flow_0ws3ps1" name="No" sourceRef="GwUseAlternative" targetRef="EndCancelled" />
+    <bpmn:sequenceFlow id="Flow_02lkipq" name="Yes" sourceRef="GwUseAlternative" targetRef="TaskSendAltOrder" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1o8abme">
+      <bpmndi:BPMNShape id="Participant_0bs6vu9_di" bpmnElement="PoolCompany" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="-18" width="1500" height="478" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0k6rr73_di" bpmnElement="LaneSystem" isHorizontal="true">
+        <dc:Bounds x="190" y="-18" width="1470" height="288" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1rfgk4r_di" bpmnElement="LaneAdministration" isHorizontal="true">
+        <dc:Bounds x="190" y="270" width="1470" height="190" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0fnoos9_di" bpmnElement="StartQuarter">
+        <dc:Bounds x="202" y="132" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="189" y="175" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dr6y0v_di" bpmnElement="TaskCheckInventory">
+        <dc:Bounds x="310" y="88" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0o7k72i_di" bpmnElement="GwLowStock" isMarkerVisible="true">
+        <dc:Bounds x="495" y="118" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="555" y="136" width="56" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_08zxjrp_di" bpmnElement="EndNoAction">
+        <dc:Bounds x="662" y="42" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="657" y="85" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0uch5ik_di" bpmnElement="TaskSendStdRequest">
+        <dc:Bounds x="630" y="186" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_00j05m4_di" bpmnElement="GwWaitStd">
+        <dc:Bounds x="815" y="216" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0vdvihf_di" bpmnElement="CatchStdConfirm">
+        <dc:Bounds x="962" y="138" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="948" y="114" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ee96np_di" bpmnElement="CatchStdReject">
+        <dc:Bounds x="962" y="228" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="957" y="204" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0s5oqnq_di" bpmnElement="CatchStdTimeout">
+        <dc:Bounds x="962" y="318" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="964" y="361" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1m6jagc_di" bpmnElement="EndConfirmed">
+        <dc:Bounds x="1122" y="138" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1100" y="181" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0yoamze_di" bpmnElement="TaskManualIntervene">
+        <dc:Bounds x="1090" y="246" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1l5i1cs_di" bpmnElement="GwUseAlternative" isMarkerVisible="true">
+        <dc:Bounds x="1275" y="276" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1260" y="333" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0qdjtpu_di" bpmnElement="EndCancelled">
+        <dc:Bounds x="1442" y="198" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1421" y="241" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1powq0u_di" bpmnElement="TaskSendAltOrder">
+        <dc:Bounds x="1410" y="306" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0d1pg43_di" bpmnElement="EndAltOrdered">
+        <dc:Bounds x="1582" y="328" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1574" y="371" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1ar4xf5_di" bpmnElement="Flow_1ar4xf5">
+        <di:waypoint x="238" y="150" />
+        <di:waypoint x="270" y="150" />
+        <di:waypoint x="270" y="128" />
+        <di:waypoint x="310" y="128" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_168w5y9_di" bpmnElement="Flow_168w5y9">
+        <di:waypoint x="410" y="128" />
+        <di:waypoint x="450" y="128" />
+        <di:waypoint x="450" y="143" />
+        <di:waypoint x="495" y="143" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00k95g1_di" bpmnElement="Flow_00k95g1">
+        <di:waypoint x="998" y="156" />
+        <di:waypoint x="1122" y="156" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c83r6g_di" bpmnElement="Flow_1c83r6g">
+        <di:waypoint x="998" y="246" />
+        <di:waypoint x="1040" y="246" />
+        <di:waypoint x="1040" y="286" />
+        <di:waypoint x="1090" y="286" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1upkg4o_di" bpmnElement="Flow_1upkg4o">
+        <di:waypoint x="998" y="336" />
+        <di:waypoint x="1040" y="336" />
+        <di:waypoint x="1040" y="286" />
+        <di:waypoint x="1090" y="286" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0x8xdk3_di" bpmnElement="Flow_0x8xdk3">
+        <di:waypoint x="1190" y="286" />
+        <di:waypoint x="1230" y="286" />
+        <di:waypoint x="1230" y="301" />
+        <di:waypoint x="1275" y="301" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tjut40_di" bpmnElement="Flow_0tjut40">
+        <di:waypoint x="1510" y="346" />
+        <di:waypoint x="1582" y="346" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1q3mnko_di" bpmnElement="Flow_1q3mnko">
+        <di:waypoint x="520" y="118" />
+        <di:waypoint x="520" y="60" />
+        <di:waypoint x="662" y="60" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="528" y="86" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11qjmv1_di" bpmnElement="Flow_11qjmv1">
+        <di:waypoint x="520" y="168" />
+        <di:waypoint x="520" y="226" />
+        <di:waypoint x="630" y="226" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="526" y="194" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0je1ztp_di" bpmnElement="Flow_0je1ztp">
+        <di:waypoint x="730" y="226" />
+        <di:waypoint x="770" y="226" />
+        <di:waypoint x="770" y="241" />
+        <di:waypoint x="815" y="241" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03pakny_di" bpmnElement="Flow_03pakny">
+        <di:waypoint x="840" y="216" />
+        <di:waypoint x="840" y="156" />
+        <di:waypoint x="962" y="156" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xngvx4_di" bpmnElement="Flow_1xngvx4">
+        <di:waypoint x="865" y="241" />
+        <di:waypoint x="910" y="241" />
+        <di:waypoint x="910" y="246" />
+        <di:waypoint x="962" y="246" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m436xm_di" bpmnElement="Flow_0m436xm">
+        <di:waypoint x="840" y="266" />
+        <di:waypoint x="840" y="336" />
+        <di:waypoint x="962" y="336" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ws3ps1_di" bpmnElement="Flow_0ws3ps1">
+        <di:waypoint x="1300" y="276" />
+        <di:waypoint x="1300" y="216" />
+        <di:waypoint x="1442" y="216" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1308" y="243" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02lkipq_di" bpmnElement="Flow_02lkipq">
+        <di:waypoint x="1325" y="301" />
+        <di:waypoint x="1370" y="301" />
+        <di:waypoint x="1370" y="346" />
+        <di:waypoint x="1410" y="346" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1376" y="321" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_1twnb89_di" bpmnElement="PoolSupplierStd" isHorizontal="true">
+        <dc:Bounds x="160" y="500" width="1500" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_0k1n9z3_di" bpmnElement="PoolSupplierAlt" isHorizontal="true">
+        <dc:Bounds x="160" y="600" width="1500" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0x0p88g_di" bpmnElement="Flow_0x0p88g">
+        <di:waypoint x="680" y="266" />
+        <di:waypoint x="680" y="500" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="661" y="380" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nz6r2v_di" bpmnElement="Flow_1nz6r2v">
+        <di:waypoint x="980" y="500" />
+        <di:waypoint x="980" y="174" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="964" y="334" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xln3r5_di" bpmnElement="Flow_0xln3r5">
+        <di:waypoint x="980" y="500" />
+        <di:waypoint x="980" y="264" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="972" y="379" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c357fl_di" bpmnElement="Flow_1c357fl">
+        <di:waypoint x="1460" y="386" />
+        <di:waypoint x="1460" y="600" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1460" y="490" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

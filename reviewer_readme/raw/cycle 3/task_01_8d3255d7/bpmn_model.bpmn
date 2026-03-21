@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_0y2clvf">
+    <bpmn:participant id="PoolRetailer" name="Online Retailer" processRef="Process_1" />
+    <bpmn:participant id="PoolCustomer" name="Customer" />
+    <bpmn:messageFlow id="TaskSendLabel_PoolCustomer_flow" name="Return label" sourceRef="TaskSendLabel" targetRef="PoolCustomer" />
+    <bpmn:messageFlow id="PoolCustomer_StartReturnRegistered_flow" name="Return request" sourceRef="PoolCustomer" targetRef="StartReturnRegistered" />
+    <bpmn:messageFlow id="PoolCustomer_CatchReturnArrived_flow" name="Returned package" sourceRef="PoolCustomer" targetRef="CatchReturnArrived" />
+    <bpmn:messageFlow id="TaskInformNoRefund_PoolCustomer_flow" name="No refund notice" sourceRef="TaskInformNoRefund" targetRef="PoolCustomer" />
+    <bpmn:messageFlow id="TaskSendCreditConfirm_PoolCustomer_flow" name="Credit confirmation" sourceRef="TaskSendCreditConfirm" targetRef="PoolCustomer" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1ldwb2y">
+      <bpmn:lane id="LaneCustomerPortal" name="Customer Portal">
+        <bpmn:flowNodeRef>StartReturnRegistered</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRecordRegistration</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskGenerateLabel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskSendLabel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwWaitArrival</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchReturnArrived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch14Days</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndTimeoutClosed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskInformNoRefund</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndNoRefund</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="LaneWarehouse" name="Warehouse">
+        <bpmn:flowNodeRef>TaskInspectGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskForwardToAccounting</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwGoodsOk</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="LaneAccounting" name="Accounting">
+        <bpmn:flowNodeRef>TaskInitiateRefund</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskSendCreditConfirm</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndCreditConfirmed</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartReturnRegistered" name="Return registered">
+      <bpmn:outgoing>StartReturnRegistered_TaskRecordRegistration_flow</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0vmw8dj" />
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="TaskRecordRegistration" name="Record return">
+      <bpmn:incoming>StartReturnRegistered_TaskRecordRegistration_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskRecordRegistration_TaskGenerateLabel_flow</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="StartReturnRegistered_TaskRecordRegistration_flow" sourceRef="StartReturnRegistered" targetRef="TaskRecordRegistration" />
+    <bpmn:serviceTask id="TaskGenerateLabel" name="Generate label">
+      <bpmn:incoming>TaskRecordRegistration_TaskGenerateLabel_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskGenerateLabel_TaskSendLabel_flow</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="TaskRecordRegistration_TaskGenerateLabel_flow" sourceRef="TaskRecordRegistration" targetRef="TaskGenerateLabel" />
+    <bpmn:sendTask id="TaskSendLabel" name="Send label">
+      <bpmn:incoming>TaskGenerateLabel_TaskSendLabel_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskSendLabel_GwWaitArrival_flow</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="TaskGenerateLabel_TaskSendLabel_flow" sourceRef="TaskGenerateLabel" targetRef="TaskSendLabel" />
+    <bpmn:eventBasedGateway id="GwWaitArrival">
+      <bpmn:incoming>TaskSendLabel_GwWaitArrival_flow</bpmn:incoming>
+      <bpmn:outgoing>GwWaitArrival_CatchReturnArrived_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwWaitArrival_Catch14Days_flow</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:sequenceFlow id="TaskSendLabel_GwWaitArrival_flow" sourceRef="TaskSendLabel" targetRef="GwWaitArrival" />
+    <bpmn:intermediateCatchEvent id="CatchReturnArrived" name="Return arrived">
+      <bpmn:incoming>GwWaitArrival_CatchReturnArrived_flow</bpmn:incoming>
+      <bpmn:outgoing>CatchReturnArrived_TaskInspectGoods_flow</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0q4fdly" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="GwWaitArrival_CatchReturnArrived_flow" sourceRef="GwWaitArrival" targetRef="CatchReturnArrived" />
+    <bpmn:intermediateCatchEvent id="Catch14Days" name="14 days passed">
+      <bpmn:incoming>GwWaitArrival_Catch14Days_flow</bpmn:incoming>
+      <bpmn:outgoing>Catch14Days_EndTimeoutClosed_flow</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0jv9f6l" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="GwWaitArrival_Catch14Days_flow" sourceRef="GwWaitArrival" targetRef="Catch14Days" />
+    <bpmn:endEvent id="EndTimeoutClosed" name="Closed">
+      <bpmn:incoming>Catch14Days_EndTimeoutClosed_flow</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Catch14Days_EndTimeoutClosed_flow" sourceRef="Catch14Days" targetRef="EndTimeoutClosed" />
+    <bpmn:userTask id="TaskInspectGoods" name="Inspect goods">
+      <bpmn:incoming>CatchReturnArrived_TaskInspectGoods_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskInspectGoods_GwGoodsOk_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="CatchReturnArrived_TaskInspectGoods_flow" sourceRef="CatchReturnArrived" targetRef="TaskInspectGoods" />
+    <bpmn:exclusiveGateway id="GwGoodsOk" name="Goods OK?">
+      <bpmn:incoming>TaskInspectGoods_GwGoodsOk_flow</bpmn:incoming>
+      <bpmn:outgoing>GwGoodsOk_TaskInformNoRefund_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwGoodsOk_TaskForwardToAccounting_flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="TaskInspectGoods_GwGoodsOk_flow" sourceRef="TaskInspectGoods" targetRef="GwGoodsOk" />
+    <bpmn:sequenceFlow id="GwGoodsOk_TaskInformNoRefund_flow" sourceRef="GwGoodsOk" targetRef="TaskInformNoRefund" />
+    <bpmn:sequenceFlow id="TaskInformNoRefund_EndNoRefund_flow" sourceRef="TaskInformNoRefund" targetRef="EndNoRefund" />
+    <bpmn:task id="TaskForwardToAccounting" name="Forward refund">
+      <bpmn:incoming>GwGoodsOk_TaskForwardToAccounting_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskForwardToAccounting_TaskInitiateRefund_flow</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="GwGoodsOk_TaskForwardToAccounting_flow" sourceRef="GwGoodsOk" targetRef="TaskForwardToAccounting" />
+    <bpmn:sequenceFlow id="TaskForwardToAccounting_TaskInitiateRefund_flow" sourceRef="TaskForwardToAccounting" targetRef="TaskInitiateRefund" />
+    <bpmn:sequenceFlow id="TaskInitiateRefund_TaskSendCreditConfirm_flow" sourceRef="TaskInitiateRefund" targetRef="TaskSendCreditConfirm" />
+    <bpmn:sequenceFlow id="TaskSendCreditConfirm_EndCreditConfirmed_flow" sourceRef="TaskSendCreditConfirm" targetRef="EndCreditConfirmed" />
+    <bpmn:sendTask id="TaskInformNoRefund" name="Inform no refund">
+      <bpmn:incoming>GwGoodsOk_TaskInformNoRefund_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskInformNoRefund_EndNoRefund_flow</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndNoRefund" name="No refund">
+      <bpmn:incoming>TaskInformNoRefund_EndNoRefund_flow</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="TaskInitiateRefund" name="Initiate refund">
+      <bpmn:incoming>TaskForwardToAccounting_TaskInitiateRefund_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskInitiateRefund_TaskSendCreditConfirm_flow</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sendTask id="TaskSendCreditConfirm" name="Send credit">
+      <bpmn:incoming>TaskInitiateRefund_TaskSendCreditConfirm_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskSendCreditConfirm_EndCreditConfirmed_flow</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="EndCreditConfirmed" name="Credited">
+      <bpmn:incoming>TaskSendCreditConfirm_EndCreditConfirmed_flow</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0y2clvf">
+      <bpmndi:BPMNShape id="Participant_1qg4nvu_di" bpmnElement="PoolRetailer" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="20" width="1878" height="580" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0hnxii3_di" bpmnElement="LaneCustomerPortal" isHorizontal="true">
+        <dc:Bounds x="190" y="20" width="1848" height="233" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1io3keg_di" bpmnElement="LaneWarehouse" isHorizontal="true">
+        <dc:Bounds x="190" y="253" width="1848" height="173" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1xarg4c_di" bpmnElement="LaneAccounting" isHorizontal="true">
+        <dc:Bounds x="190" y="426" width="1848" height="174" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_086f3ql_di" bpmnElement="StartReturnRegistered">
+        <dc:Bounds x="232" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="207" y="98" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0txmalo_di" bpmnElement="TaskRecordRegistration">
+        <dc:Bounds x="350" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0at65fl_di" bpmnElement="TaskGenerateLabel">
+        <dc:Bounds x="490" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00lgq91_di" bpmnElement="TaskSendLabel">
+        <dc:Bounds x="630" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0n7rovz_di" bpmnElement="GwWaitArrival">
+        <dc:Bounds x="815" y="110" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1n460jy_di" bpmnElement="CatchReturnArrived">
+        <dc:Bounds x="962" y="42" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="945" y="18" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0h42j8b_di" bpmnElement="Catch14Days">
+        <dc:Bounds x="962" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="941" y="225" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_140k8hq_di" bpmnElement="EndTimeoutClosed">
+        <dc:Bounds x="1122" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1123" y="225" width="35" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16258f7_di" bpmnElement="TaskInspectGoods">
+        <dc:Bounds x="1070" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0gorjdi_di" bpmnElement="GwGoodsOk" isMarkerVisible="true">
+        <dc:Bounds x="1255" y="290" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1251" y="347" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0klki15_di" bpmnElement="TaskForwardToAccounting">
+        <dc:Bounds x="1390" y="300" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1wg7lb7_di" bpmnElement="TaskInformNoRefund">
+        <dc:Bounds x="1390" y="150" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1bpfvhe_di" bpmnElement="EndNoRefund">
+        <dc:Bounds x="1582" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1576" y="215" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0j50utp_di" bpmnElement="TaskInitiateRefund">
+        <dc:Bounds x="1550" y="450" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ni1fm9_di" bpmnElement="TaskSendCreditConfirm">
+        <dc:Bounds x="1710" y="450" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ii968r_di" bpmnElement="EndCreditConfirmed">
+        <dc:Bounds x="1902" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1899" y="515" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1r4r1ok_di" bpmnElement="StartReturnRegistered_TaskRecordRegistration_flow">
+        <di:waypoint x="268" y="140" />
+        <di:waypoint x="310" y="140" />
+        <di:waypoint x="310" y="120" />
+        <di:waypoint x="350" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mtu5kc_di" bpmnElement="TaskRecordRegistration_TaskGenerateLabel_flow">
+        <di:waypoint x="450" y="120" />
+        <di:waypoint x="490" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zequ77_di" bpmnElement="TaskGenerateLabel_TaskSendLabel_flow">
+        <di:waypoint x="590" y="120" />
+        <di:waypoint x="630" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0s3s423_di" bpmnElement="TaskSendLabel_GwWaitArrival_flow">
+        <di:waypoint x="730" y="120" />
+        <di:waypoint x="770" y="120" />
+        <di:waypoint x="770" y="135" />
+        <di:waypoint x="815" y="135" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c69sh5_di" bpmnElement="GwWaitArrival_CatchReturnArrived_flow">
+        <di:waypoint x="840" y="110" />
+        <di:waypoint x="840" y="60" />
+        <di:waypoint x="962" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mv9wah_di" bpmnElement="GwWaitArrival_Catch14Days_flow">
+        <di:waypoint x="840" y="160" />
+        <di:waypoint x="840" y="200" />
+        <di:waypoint x="962" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sqx6pb_di" bpmnElement="Catch14Days_EndTimeoutClosed_flow">
+        <di:waypoint x="998" y="200" />
+        <di:waypoint x="1122" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0g25nol_di" bpmnElement="CatchReturnArrived_TaskInspectGoods_flow">
+        <di:waypoint x="998" y="60" />
+        <di:waypoint x="1030" y="60" />
+        <di:waypoint x="1030" y="300" />
+        <di:waypoint x="1070" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0f870hs_di" bpmnElement="TaskInspectGoods_GwGoodsOk_flow">
+        <di:waypoint x="1170" y="300" />
+        <di:waypoint x="1210" y="300" />
+        <di:waypoint x="1210" y="315" />
+        <di:waypoint x="1255" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1w68c33_di" bpmnElement="GwGoodsOk_TaskInformNoRefund_flow">
+        <di:waypoint x="1280" y="290" />
+        <di:waypoint x="1280" y="190" />
+        <di:waypoint x="1390" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1koqbjp_di" bpmnElement="TaskInformNoRefund_EndNoRefund_flow">
+        <di:waypoint x="1490" y="190" />
+        <di:waypoint x="1582" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0es7lrt_di" bpmnElement="GwGoodsOk_TaskForwardToAccounting_flow">
+        <di:waypoint x="1305" y="315" />
+        <di:waypoint x="1350" y="315" />
+        <di:waypoint x="1350" y="340" />
+        <di:waypoint x="1390" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_184amfp_di" bpmnElement="TaskForwardToAccounting_TaskInitiateRefund_flow">
+        <di:waypoint x="1490" y="340" />
+        <di:waypoint x="1520" y="340" />
+        <di:waypoint x="1520" y="490" />
+        <di:waypoint x="1550" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wjyrza_di" bpmnElement="TaskInitiateRefund_TaskSendCreditConfirm_flow">
+        <di:waypoint x="1650" y="490" />
+        <di:waypoint x="1710" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wc2353_di" bpmnElement="TaskSendCreditConfirm_EndCreditConfirmed_flow">
+        <di:waypoint x="1810" y="490" />
+        <di:waypoint x="1902" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_1lwxqiw_di" bpmnElement="PoolCustomer" isHorizontal="true">
+        <dc:Bounds x="160" y="660" width="1700" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_12nz8fd_di" bpmnElement="TaskSendLabel_PoolCustomer_flow">
+        <di:waypoint x="680" y="160" />
+        <di:waypoint x="680" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="665" y="407" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0943f4k_di" bpmnElement="PoolCustomer_StartReturnRegistered_flow">
+        <di:waypoint x="250" y="660" />
+        <di:waypoint x="250" y="158" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="228" y="406" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ro4cb3_di" bpmnElement="PoolCustomer_CatchReturnArrived_flow">
+        <di:waypoint x="980" y="660" />
+        <di:waypoint x="980" y="78" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="972" y="366" width="46" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00fw04p_di" bpmnElement="TaskInformNoRefund_PoolCustomer_flow">
+        <di:waypoint x="1440" y="230" />
+        <di:waypoint x="1440" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1415" y="442" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1eg4mfv_di" bpmnElement="TaskSendCreditConfirm_PoolCustomer_flow">
+        <di:waypoint x="1760" y="530" />
+        <di:waypoint x="1760" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1745" y="591" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/bpmn-js@18.7.0/dist/bpmn-modeler.development.js"></script>
+</head>
+<body>
+  <div id="canvas" style="position:absolute;top:-9999px;left:-9999px;width:2000px;height:2000px;"></div>
+  <script>
+    'use strict';
+
+    const EMPTY_BPMN = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="false">
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`;
+
+    // Global lane-ID mapping: logical ID → bpmn-js internal ID
+    let laneIdMap = {};
+
+    const modeler = new BpmnJS({ container: '#canvas' });
+
+    function expandConnectTo(actions) {
+      const generated = new Set();
+      actions.forEach(a => {
+        if (a.type === 'draw' && Array.isArray(a.connectTo)) {
+          a.connectTo.forEach(t => { if (t) generated.add(`${a.elementId}->${t}`); });
+        }
+      });
+
+      const result = [];
+      actions.forEach(a => {
+        if (a.type === 'draw' && Array.isArray(a.connectTo) && a.connectTo.length > 0) {
+          const copy = Object.assign({}, a);
+          delete copy.connectTo;
+          result.push(copy);
+          a.connectTo.forEach(t => {
+            if (t) result.push({ type: 'connect', sourceId: a.elementId, targetId: t });
+          });
+        } else if (a.type === 'connect') {
+          const key = `${a.sourceId}->${a.targetId}`;
+          if (!generated.has(key)) result.push(a);
+        } else {
+          result.push(a);
+        }
+      });
+      return result;
+    }
+
+    function optimizeOrder(actions) {
+      const ORDER = ['delete', 'resize', 'move', 'participate', 'draw', 'rename', 'connect'];
+      const buckets = {};
+      ORDER.forEach(t => buckets[t] = []);
+      actions.forEach(a => { if (buckets[a.type]) buckets[a.type].push(a); });
+      return ORDER.flatMap(t => buckets[t]);
+    }
+
+    function execDelete(action, modeling, elementRegistry) {
+      const el = elementRegistry.get(action.elementId);
+      if (el) modeling.removeElements([el]);
+    }
+
+    function execMove(action, modeling, elementRegistry) {
+      const el = elementRegistry.get(action.elementId);
+      if (!el) return;
+      modeling.moveElements([el], { x: action.x - el.x, y: action.y - el.y });
+    }
+
+    function execResize(action, modeling, elementRegistry) {
+      const el = elementRegistry.get(action.elementId);
+      if (!el) return;
+      modeling.resizeShape(el, { x: el.x, y: el.y, width: action.width, height: action.height });
+    }
+
+    function execParticipate(action, modeling, elementFactory, elementRegistry, canvas) {
+      if (action.elementId) {
+        const ex = elementRegistry.get(action.elementId);
+        if (ex) modeling.removeElements([ex]);
+      }
+
+      const isExpanded = action.isExpanded !== false;
+      const participant = elementFactory.createParticipantShape({
+        type: 'bpmn:Participant',
+        isExpanded: isExpanded
+      });
+
+      const cx = action.x + action.width / 2;
+      const cy = action.y + action.height / 2;
+
+      const created = modeling.createShape(participant, { x: cx, y: cy }, canvas.getRootElement());
+      modeling.resizeShape(created, { x: action.x, y: action.y, width: action.width, height: action.height });
+
+      if (action.label) modeling.updateLabel(created, action.label);
+      if (action.elementId) modeling.updateProperties(created, { id: action.elementId });
+
+      const lanes = Array.isArray(action.lanes) ? action.lanes.filter(Boolean) : [];
+      if (lanes.length >= 2) {
+        modeling.splitLane(created, lanes.length);
+        const laneShapes = created.children.filter(c => c.type === 'bpmn:Lane');
+        laneShapes.forEach((ls, i) => {
+          const rawLabel = String(lanes[i] || ('Lane' + i));
+          const sanitized = rawLabel
+            .replace(/[^a-zA-Z0-9\s]/g, '')
+            .trim()
+            .split(/\s+/)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join('');
+          const laneId = 'Lane' + sanitized;
+          modeling.updateProperties(ls, { name: rawLabel });
+          try {
+            ls.businessObject.id = laneId;
+            elementRegistry.updateId(ls, laneId);
+          } catch (e) { /* ignore: lane ID already in use */ }
+          laneIdMap[laneId] = ls.id;
+        });
+      }
+    }
+
+    function execDraw(action, modeling, elementFactory, elementRegistry, canvas) {
+      if (action.elementId) {
+        const ex = elementRegistry.get(action.elementId);
+        if (ex) modeling.removeElements([ex]);
+      }
+
+      const rawType = action.elementType || '';
+      const elemType = rawType.startsWith('bpmn:') ? rawType : 'bpmn:' + rawType;
+      const isEvent = elemType.includes('Event');
+      const shape = elementFactory.createShape({ type: elemType });
+
+      let parent = canvas.getRootElement();
+      if (action.parentId) {
+        const resolvedParent = laneIdMap[action.parentId] || action.parentId;
+        const parentEl = elementRegistry.get(resolvedParent);
+        if (parentEl) parent = parentEl;
+      }
+
+      const created = modeling.createShape(shape, { x: action.x, y: action.y }, parent);
+
+      const rawEvDef = action.eventDefinition || '';
+      if (rawEvDef && isEvent) {
+        try {
+          const bpmnFactory = modeler.get('bpmnFactory');
+          const evDefType = rawEvDef.startsWith('bpmn:') ? rawEvDef : 'bpmn:' + rawEvDef;
+          const evDef = bpmnFactory.create(evDefType);
+          modeling.updateProperties(created, { eventDefinitions: [evDef] });
+        } catch (e) { console.warn('[BpmnHeadless] eventDef error:', e.message); }
+      }
+
+      if (action.label) modeling.updateLabel(created, action.label);
+      if (action.elementId) modeling.updateProperties(created, { id: action.elementId });
+    }
+
+    function execRename(action, modeling, elementRegistry) {
+      const el = elementRegistry.get(action.elementId);
+      if (el) modeling.updateLabel(el, action.label);
+    }
+
+    function execConnect(action, modeling, elementRegistry) {
+      const src = elementRegistry.get(action.sourceId);
+      const tgt = elementRegistry.get(action.targetId);
+      if (!src || !tgt) return;
+
+      elementRegistry.filter(el => {
+        return (el.type === 'bpmn:SequenceFlow' || el.type === 'bpmn:MessageFlow')
+          && el.source && el.source.id === action.sourceId
+          && el.target && el.target.id === action.targetId;
+      }).forEach(conn => modeling.removeElements([conn]));
+
+      function getTopPool(el) {
+        if (el.type === 'bpmn:Participant') return el;
+        let cur = el;
+        while (cur) {
+          if (cur.parent && cur.parent.type === 'bpmn:Participant') return cur.parent;
+          cur = cur.parent;
+        }
+        return null;
+      }
+
+      const srcPool = getTopPool(src);
+      const tgtPool = getTopPool(tgt);
+      let flowType = 'bpmn:SequenceFlow';
+      if ((srcPool && tgtPool && srcPool.id !== tgtPool.id)
+          || (srcPool && !tgtPool)
+          || (!srcPool && tgtPool)) {
+        flowType = 'bpmn:MessageFlow';
+      }
+
+      const conn = modeling.connect(src, tgt, { type: flowType });
+      if (action.label) modeling.updateLabel(conn, action.label);
+    }
+
+    /**
+     * Apply an ordered list of frontend-format actions to a fresh bpmn.io modeler
+     * and return the resulting BPMN 2.0 XML string.
+     *
+     * @param {Array} actions  Frontend-format action objects (same schema as task.js).
+     * @returns {Promise<string>} The BPMN 2.0 XML.
+     */
+    async function applyActionsAndGetXml(actions) {
+      laneIdMap = {};
+
+      await modeler.importXML(EMPTY_BPMN);
+
+      const modeling        = modeler.get('modeling');
+      const elementFactory  = modeler.get('elementFactory');
+      const elementRegistry = modeler.get('elementRegistry');
+      const canvas          = modeler.get('canvas');
+
+      const expanded  = expandConnectTo(Array.isArray(actions) ? actions : []);
+      const optimized = optimizeOrder(expanded);
+
+      for (const action of optimized) {
+        let a = action;
+        if (a.parentId && laneIdMap[a.parentId]) {
+          a = Object.assign({}, a, { parentId: laneIdMap[a.parentId] });
+        }
+
+        try {
+          switch (a.type) {
+            case 'delete':      execDelete(a, modeling, elementRegistry); break;
+            case 'move':        execMove(a, modeling, elementRegistry); break;
+            case 'resize':      execResize(a, modeling, elementRegistry); break;
+            case 'participate': execParticipate(a, modeling, elementFactory, elementRegistry, canvas); break;
+            case 'draw':        execDraw(a, modeling, elementFactory, elementRegistry, canvas); break;
+            case 'rename':      execRename(a, modeling, elementRegistry); break;
+            case 'connect':     execConnect(a, modeling, elementRegistry); break;
+          }
+        } catch (err) {
+          console.error('[BpmnHeadless] Action error:', a.type, err.message);
+        }
+      }
+
+      const { xml } = await modeler.saveXML({ format: true });
+      return xml || '';
+    }
+
+    window.isReady = false;
+    window.applyActionsAndGetXml = applyActionsAndGetXml;
+
+    modeler.importXML(EMPTY_BPMN).then(() => {
+      window.isReady = true;
+    }).catch(err => {
+      console.error('[BpmnHeadless] Init error:', err);
+      window.isReady = true;
+    });
+  </script>
+</body>
+</html>

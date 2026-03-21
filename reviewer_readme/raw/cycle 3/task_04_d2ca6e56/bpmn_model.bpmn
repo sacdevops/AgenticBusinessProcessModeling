@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1fv1kiv">
+    <bpmn:participant id="PoolBuildingAuthority" name="Building Authority" processRef="Process_1" />
+    <bpmn:participant id="PoolCitizen" name="Citizen" />
+    <bpmn:participant id="PoolEnvironmentalAgency" name="Environmental Agency" />
+    <bpmn:messageFlow id="PoolCitizen_StartApplicationReceived_flow" name="Building application" sourceRef="PoolCitizen" targetRef="StartApplicationReceived" />
+    <bpmn:messageFlow id="TaskRequestDocuments_PoolCitizen_flow" name="Missing documents request" sourceRef="TaskRequestDocuments" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="PoolCitizen_CatchDocumentsReceived_flow" name="Missing documents" sourceRef="PoolCitizen" targetRef="CatchDocumentsReceived" />
+    <bpmn:messageFlow id="TaskForwardEnvReview_PoolEnvironmentalAgency_flow" name="Application for review" sourceRef="TaskForwardEnvReview" targetRef="PoolEnvironmentalAgency" />
+    <bpmn:messageFlow id="PoolEnvironmentalAgency_CatchEnvOpinion_flow" name="Environmental opinion" sourceRef="PoolEnvironmentalAgency" targetRef="CatchEnvOpinion" />
+    <bpmn:messageFlow id="EndRejectedNoDocsMsg_PoolCitizen_flow" name="Rejection" sourceRef="EndRejectedNoDocsMsg" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="EndRejectedEnvMsg_PoolCitizen_flow" name="Rejection" sourceRef="EndRejectedEnvMsg" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="EndRejectedTechMsg_PoolCitizen_flow" name="Rejection" sourceRef="EndRejectedTechMsg" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="EndPermitMsg_PoolCitizen_flow" name="Permit" sourceRef="EndPermitMsg" targetRef="PoolCitizen" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_0jch6mz">
+      <bpmn:lane id="LaneOfficial" name="Official">
+        <bpmn:flowNodeRef>StartApplicationReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskCheckCompleteness</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRequestDocuments</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwWaitDocs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchDocumentsReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskCheckCompleteness2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwComplete2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndRejectedEnvMsg</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndRejectedNoDocsMsg</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRejectNoDocs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchEnvOpinion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskForwardEnvReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwEnvPositive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRejectEnv</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwComplete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch14DaysExceeded</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="LaneTestEngineer" name="Test Engineer">
+        <bpmn:flowNodeRef>EndRejectedTechMsg</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndPermitMsg</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskIssuePermit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRejectTech</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwTechPositive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskCheckTechnical</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartApplicationReceived" name="Application received">
+      <bpmn:outgoing>StartApplicationReceived_TaskCheckCompleteness_flow</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_02g2a9w" />
+    </bpmn:startEvent>
+    <bpmn:userTask id="TaskCheckCompleteness" name="Check completeness">
+      <bpmn:incoming>StartApplicationReceived_TaskCheckCompleteness_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskCheckCompleteness_GwComplete_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="StartApplicationReceived_TaskCheckCompleteness_flow" sourceRef="StartApplicationReceived" targetRef="TaskCheckCompleteness" />
+    <bpmn:exclusiveGateway id="GwComplete" name="Complete?">
+      <bpmn:incoming>TaskCheckCompleteness_GwComplete_flow</bpmn:incoming>
+      <bpmn:outgoing>GwComplete_TaskRequestDocuments_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwComplete_TaskForwardEnvReview_flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="TaskCheckCompleteness_GwComplete_flow" sourceRef="TaskCheckCompleteness" targetRef="GwComplete" />
+    <bpmn:sendTask id="TaskRequestDocuments" name="Request documents">
+      <bpmn:incoming>GwComplete_TaskRequestDocuments_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskRequestDocuments_GwWaitDocs_flow</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="GwComplete_TaskRequestDocuments_flow" name="No" sourceRef="GwComplete" targetRef="TaskRequestDocuments" />
+    <bpmn:eventBasedGateway id="GwWaitDocs">
+      <bpmn:incoming>TaskRequestDocuments_GwWaitDocs_flow</bpmn:incoming>
+      <bpmn:outgoing>GwWaitDocs_CatchDocumentsReceived_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwWaitDocs_Catch14DaysExceeded_flow</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:sequenceFlow id="TaskRequestDocuments_GwWaitDocs_flow" sourceRef="TaskRequestDocuments" targetRef="GwWaitDocs" />
+    <bpmn:intermediateCatchEvent id="CatchDocumentsReceived" name="Documents received">
+      <bpmn:incoming>GwWaitDocs_CatchDocumentsReceived_flow</bpmn:incoming>
+      <bpmn:outgoing>CatchDocumentsReceived_TaskCheckCompleteness2_flow</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_07c03xq" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="GwWaitDocs_CatchDocumentsReceived_flow" sourceRef="GwWaitDocs" targetRef="CatchDocumentsReceived" />
+    <bpmn:userTask id="TaskCheckCompleteness2" name="Recheck completeness">
+      <bpmn:incoming>CatchDocumentsReceived_TaskCheckCompleteness2_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskCheckCompleteness2_GwComplete2_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="CatchDocumentsReceived_TaskCheckCompleteness2_flow" sourceRef="CatchDocumentsReceived" targetRef="TaskCheckCompleteness2" />
+    <bpmn:sequenceFlow id="TaskCheckCompleteness2_GwComplete2_flow" sourceRef="TaskCheckCompleteness2" targetRef="GwComplete2" />
+    <bpmn:intermediateCatchEvent id="Catch14DaysExceeded" name="14 days exceeded">
+      <bpmn:incoming>GwWaitDocs_Catch14DaysExceeded_flow</bpmn:incoming>
+      <bpmn:outgoing>Catch14DaysExceeded_TaskRejectNoDocs_flow</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1ayw2vm" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="GwWaitDocs_Catch14DaysExceeded_flow" sourceRef="GwWaitDocs" targetRef="Catch14DaysExceeded" />
+    <bpmn:sequenceFlow id="Catch14DaysExceeded_TaskRejectNoDocs_flow" sourceRef="Catch14DaysExceeded" targetRef="TaskRejectNoDocs" />
+    <bpmn:sequenceFlow id="GwComplete2_TaskForwardEnvReview_flow" name="Yes" sourceRef="GwComplete2" targetRef="TaskForwardEnvReview" />
+    <bpmn:sequenceFlow id="GwComplete_TaskForwardEnvReview_flow" name="Yes" sourceRef="GwComplete" targetRef="TaskForwardEnvReview" />
+    <bpmn:sequenceFlow id="CatchEnvOpinion_GwEnvPositive_flow" sourceRef="CatchEnvOpinion" targetRef="GwEnvPositive" />
+    <bpmn:sequenceFlow id="GwEnvPositive_TaskRejectEnv_flow" name="No" sourceRef="GwEnvPositive" targetRef="TaskRejectEnv" />
+    <bpmn:sequenceFlow id="GwEnvPositive_TaskCheckTechnical_flow" name="Yes" sourceRef="GwEnvPositive" targetRef="TaskCheckTechnical" />
+    <bpmn:exclusiveGateway id="GwComplete2" name="Complete now?">
+      <bpmn:incoming>TaskCheckCompleteness2_GwComplete2_flow</bpmn:incoming>
+      <bpmn:outgoing>GwComplete2_TaskForwardEnvReview_flow</bpmn:outgoing>
+      <bpmn:outgoing>Flow_17s6l4y</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndRejectedEnvMsg" name="Rejection sent">
+      <bpmn:incoming>TaskRejectEnv_EndRejectedEnvMsg_flow</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0w8dfk0" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndRejectedNoDocsMsg" name="Rejection sent">
+      <bpmn:incoming>TaskRejectNoDocs_EndRejectedNoDocsMsg_flow</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1dimicy" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="TaskRejectNoDocs" name="Reject application">
+      <bpmn:incoming>Catch14DaysExceeded_TaskRejectNoDocs_flow</bpmn:incoming>
+      <bpmn:incoming>Flow_17s6l4y</bpmn:incoming>
+      <bpmn:outgoing>TaskRejectNoDocs_EndRejectedNoDocsMsg_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:intermediateCatchEvent id="CatchEnvOpinion" name="Opinion received">
+      <bpmn:incoming>TaskForwardEnvReview_CatchEnvOpinion_flow</bpmn:incoming>
+      <bpmn:outgoing>CatchEnvOpinion_GwEnvPositive_flow</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1hi75wj" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sendTask id="TaskForwardEnvReview" name="Forward for review">
+      <bpmn:incoming>GwComplete2_TaskForwardEnvReview_flow</bpmn:incoming>
+      <bpmn:incoming>GwComplete_TaskForwardEnvReview_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskForwardEnvReview_CatchEnvOpinion_flow</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="TaskRejectEnv_EndRejectedEnvMsg_flow" sourceRef="TaskRejectEnv" targetRef="EndRejectedEnvMsg" />
+    <bpmn:sequenceFlow id="TaskRejectNoDocs_EndRejectedNoDocsMsg_flow" sourceRef="TaskRejectNoDocs" targetRef="EndRejectedNoDocsMsg" />
+    <bpmn:sequenceFlow id="TaskForwardEnvReview_CatchEnvOpinion_flow" sourceRef="TaskForwardEnvReview" targetRef="CatchEnvOpinion" />
+    <bpmn:exclusiveGateway id="GwEnvPositive" name="Opinion positive?">
+      <bpmn:incoming>CatchEnvOpinion_GwEnvPositive_flow</bpmn:incoming>
+      <bpmn:outgoing>GwEnvPositive_TaskRejectEnv_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwEnvPositive_TaskCheckTechnical_flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="TaskRejectEnv" name="Reject application">
+      <bpmn:incoming>GwEnvPositive_TaskRejectEnv_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskRejectEnv_EndRejectedEnvMsg_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_17s6l4y" sourceRef="GwComplete2" targetRef="TaskRejectNoDocs" />
+    <bpmn:endEvent id="EndRejectedTechMsg" name="Rejection sent">
+      <bpmn:incoming>TaskRejectTech_EndRejectedTechMsg_flow</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1pfivtw" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndPermitMsg" name="Permit sent">
+      <bpmn:incoming>TaskIssuePermit_EndPermitMsg_flow</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1bonb7e" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="TaskIssuePermit" name="Issue permit">
+      <bpmn:incoming>GwTechPositive_TaskIssuePermit_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskIssuePermit_EndPermitMsg_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="TaskRejectTech" name="Reject application">
+      <bpmn:incoming>GwTechPositive_TaskRejectTech_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskRejectTech_EndRejectedTechMsg_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GwTechPositive" name="Technical ok?">
+      <bpmn:incoming>TaskCheckTechnical_GwTechPositive_flow</bpmn:incoming>
+      <bpmn:outgoing>GwTechPositive_TaskIssuePermit_flow</bpmn:outgoing>
+      <bpmn:outgoing>GwTechPositive_TaskRejectTech_flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="TaskCheckTechnical" name="Check technical">
+      <bpmn:incoming>GwEnvPositive_TaskCheckTechnical_flow</bpmn:incoming>
+      <bpmn:outgoing>TaskCheckTechnical_GwTechPositive_flow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="TaskRejectTech_EndRejectedTechMsg_flow" sourceRef="TaskRejectTech" targetRef="EndRejectedTechMsg" />
+    <bpmn:sequenceFlow id="TaskIssuePermit_EndPermitMsg_flow" sourceRef="TaskIssuePermit" targetRef="EndPermitMsg" />
+    <bpmn:sequenceFlow id="GwTechPositive_TaskIssuePermit_flow" name="Yes" sourceRef="GwTechPositive" targetRef="TaskIssuePermit" />
+    <bpmn:sequenceFlow id="GwTechPositive_TaskRejectTech_flow" name="No" sourceRef="GwTechPositive" targetRef="TaskRejectTech" />
+    <bpmn:sequenceFlow id="TaskCheckTechnical_GwTechPositive_flow" sourceRef="TaskCheckTechnical" targetRef="GwTechPositive" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1fv1kiv">
+      <bpmndi:BPMNShape id="Participant_1iq1dxz_di" bpmnElement="PoolBuildingAuthority" isHorizontal="true" isExpanded="true">
+        <dc:Bounds x="160" y="-10" width="2078" height="610" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1tk63re_di" bpmnElement="LaneOfficial" isHorizontal="true">
+        <dc:Bounds x="190" y="-10" width="2048" height="350" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0ri7k83_di" bpmnElement="LaneTestEngineer" isHorizontal="true">
+        <dc:Bounds x="190" y="340" width="2048" height="260" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0qe5306_di" bpmnElement="StartApplicationReceived">
+        <dc:Bounds x="222" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="213" y="124.5" width="53" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1mmr33c_di" bpmnElement="TaskCheckCompleteness">
+        <dc:Bounds x="350" y="120" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0fh7zx5_di" bpmnElement="GwComplete" isMarkerVisible="true">
+        <dc:Bounds x="515" y="150" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="513" y="207" width="54" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ascbvl_di" bpmnElement="TaskRequestDocuments">
+        <dc:Bounds x="630" y="50" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1w0vg8m_di" bpmnElement="GwWaitDocs">
+        <dc:Bounds x="815" y="80" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1np4xqr_di" bpmnElement="CatchDocumentsReceived">
+        <dc:Bounds x="972" y="52" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="961" y="14.5" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dhfbxy_di" bpmnElement="TaskCheckCompleteness2">
+        <dc:Bounds x="1090" y="10" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1fjbysu_di" bpmnElement="Catch14DaysExceeded">
+        <dc:Bounds x="972" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="945" y="185" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_19d6hqv_di" bpmnElement="GwComplete2" isMarkerVisible="true">
+        <dc:Bounds x="1295" y="40" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1281" y="16" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1o1pbej_di" bpmnElement="EndRejectedEnvMsg">
+        <dc:Bounds x="2012" y="207" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1994" y="183" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_032t287_di" bpmnElement="EndRejectedNoDocsMsg">
+        <dc:Bounds x="2012" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1994" y="118" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1r1cduk_di" bpmnElement="TaskRejectNoDocs">
+        <dc:Bounds x="1800" y="120" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xmo482_di" bpmnElement="CatchEnvOpinion">
+        <dc:Bounds x="1552" y="207" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1528" y="183" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1m7uxep_di" bpmnElement="TaskForwardEnvReview">
+        <dc:Bounds x="1340" y="185" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1515z55_di" bpmnElement="GwEnvPositive" isMarkerVisible="true">
+        <dc:Bounds x="1695" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1677" y="251" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_145zs0u_di" bpmnElement="TaskRejectEnv">
+        <dc:Bounds x="1800" y="250" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1w9c0f5_di" bpmnElement="EndRejectedTechMsg">
+        <dc:Bounds x="2102" y="512" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2084" y="488" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0a7rr22_di" bpmnElement="EndPermitMsg">
+        <dc:Bounds x="2102" y="402" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2091" y="378" width="57" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02gz963_di" bpmnElement="TaskIssuePermit">
+        <dc:Bounds x="1890" y="380" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0afa84x_di" bpmnElement="TaskRejectTech">
+        <dc:Bounds x="1890" y="490" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0nj92jx_di" bpmnElement="GwTechPositive" isMarkerVisible="true">
+        <dc:Bounds x="1775" y="450" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1835" y="468" width="66" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ukc9uv_di" bpmnElement="TaskCheckTechnical">
+        <dc:Bounds x="1610" y="420" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_14bbcsc_di" bpmnElement="StartApplicationReceived_TaskCheckCompleteness_flow">
+        <di:waypoint x="258" y="180" />
+        <di:waypoint x="300" y="180" />
+        <di:waypoint x="300" y="160" />
+        <di:waypoint x="350" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1a27hck_di" bpmnElement="TaskCheckCompleteness_GwComplete_flow">
+        <di:waypoint x="450" y="160" />
+        <di:waypoint x="480" y="160" />
+        <di:waypoint x="480" y="175" />
+        <di:waypoint x="515" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u9e899_di" bpmnElement="GwComplete_TaskRequestDocuments_flow">
+        <di:waypoint x="540" y="150" />
+        <di:waypoint x="540" y="90" />
+        <di:waypoint x="630" y="90" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="548" y="117" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tnyi14_di" bpmnElement="TaskRequestDocuments_GwWaitDocs_flow">
+        <di:waypoint x="730" y="90" />
+        <di:waypoint x="770" y="90" />
+        <di:waypoint x="770" y="105" />
+        <di:waypoint x="815" y="105" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_176w6kh_di" bpmnElement="GwWaitDocs_CatchDocumentsReceived_flow">
+        <di:waypoint x="840" y="80" />
+        <di:waypoint x="840" y="70" />
+        <di:waypoint x="972" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0v2mvhe_di" bpmnElement="CatchDocumentsReceived_TaskCheckCompleteness2_flow">
+        <di:waypoint x="1008" y="70" />
+        <di:waypoint x="1050" y="70" />
+        <di:waypoint x="1050" y="50" />
+        <di:waypoint x="1090" y="50" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g6cuaq_di" bpmnElement="TaskCheckCompleteness2_GwComplete2_flow">
+        <di:waypoint x="1190" y="50" />
+        <di:waypoint x="1220" y="50" />
+        <di:waypoint x="1220" y="65" />
+        <di:waypoint x="1295" y="65" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hbdsz5_di" bpmnElement="GwWaitDocs_Catch14DaysExceeded_flow">
+        <di:waypoint x="840" y="130" />
+        <di:waypoint x="840" y="160" />
+        <di:waypoint x="972" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ui8tad_di" bpmnElement="Catch14DaysExceeded_TaskRejectNoDocs_flow">
+        <di:waypoint x="1008" y="160" />
+        <di:waypoint x="1800" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0lwznnm_di" bpmnElement="GwComplete2_TaskForwardEnvReview_flow">
+        <di:waypoint x="1320" y="90" />
+        <di:waypoint x="1320" y="225" />
+        <di:waypoint x="1340" y="225" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2036" y="176" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jol893_di" bpmnElement="GwComplete_TaskForwardEnvReview_flow">
+        <di:waypoint x="565" y="175" />
+        <di:waypoint x="600" y="175" />
+        <di:waypoint x="600" y="225" />
+        <di:waypoint x="1340" y="225" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="961" y="205" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09c47qp_di" bpmnElement="CatchEnvOpinion_GwEnvPositive_flow">
+        <di:waypoint x="1570" y="243" />
+        <di:waypoint x="1570" y="300" />
+        <di:waypoint x="1695" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17s2jww_di" bpmnElement="GwEnvPositive_TaskRejectEnv_flow">
+        <di:waypoint x="1745" y="300" />
+        <di:waypoint x="1773" y="300" />
+        <di:waypoint x="1773" y="290" />
+        <di:waypoint x="1800" y="290" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1777" y="288" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02e8kxg_di" bpmnElement="GwEnvPositive_TaskCheckTechnical_flow">
+        <di:waypoint x="1720" y="325" />
+        <di:waypoint x="1720" y="380" />
+        <di:waypoint x="1690" y="420" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1726" y="347" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fqvsx2_di" bpmnElement="TaskRejectEnv_EndRejectedEnvMsg_flow">
+        <di:waypoint x="1900" y="290" />
+        <di:waypoint x="1956" y="290" />
+        <di:waypoint x="1956" y="225" />
+        <di:waypoint x="2012" y="225" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1us9wiz_di" bpmnElement="TaskRejectNoDocs_EndRejectedNoDocsMsg_flow">
+        <di:waypoint x="1900" y="160" />
+        <di:waypoint x="2012" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_153b1ty_di" bpmnElement="TaskForwardEnvReview_CatchEnvOpinion_flow">
+        <di:waypoint x="1440" y="225" />
+        <di:waypoint x="1552" y="225" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17s6l4y_di" bpmnElement="Flow_17s6l4y">
+        <di:waypoint x="1345" y="65" />
+        <di:waypoint x="1850" y="65" />
+        <di:waypoint x="1850" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e8v43d_di" bpmnElement="TaskRejectTech_EndRejectedTechMsg_flow">
+        <di:waypoint x="1990" y="530" />
+        <di:waypoint x="2102" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mwtvo7_di" bpmnElement="TaskIssuePermit_EndPermitMsg_flow">
+        <di:waypoint x="1990" y="420" />
+        <di:waypoint x="2102" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nwlg44_di" bpmnElement="GwTechPositive_TaskIssuePermit_flow">
+        <di:waypoint x="1800" y="450" />
+        <di:waypoint x="1800" y="420" />
+        <di:waypoint x="1890" y="420" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1806" y="432" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jem86d_di" bpmnElement="GwTechPositive_TaskRejectTech_flow">
+        <di:waypoint x="1800" y="500" />
+        <di:waypoint x="1800" y="530" />
+        <di:waypoint x="1890" y="530" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1808" y="512" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cvohb0_di" bpmnElement="TaskCheckTechnical_GwTechPositive_flow">
+        <di:waypoint x="1710" y="460" />
+        <di:waypoint x="1740" y="460" />
+        <di:waypoint x="1740" y="475" />
+        <di:waypoint x="1775" y="475" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_09xjsmv_di" bpmnElement="PoolCitizen" isHorizontal="true">
+        <dc:Bounds x="160" y="660" width="1600" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_0cdpbdh_di" bpmnElement="PoolEnvironmentalAgency" isHorizontal="true">
+        <dc:Bounds x="160" y="760" width="1600" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0kvt472_di" bpmnElement="PoolCitizen_StartApplicationReceived_flow">
+        <di:waypoint x="240" y="660" />
+        <di:waypoint x="240" y="198" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="229" y="426" width="53" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hxfb7s_di" bpmnElement="TaskRequestDocuments_PoolCitizen_flow">
+        <di:waypoint x="680" y="130" />
+        <di:waypoint x="680" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="668" y="392" width="55" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0lkh49y_di" bpmnElement="PoolCitizen_CatchDocumentsReceived_flow">
+        <di:waypoint x="990" y="660" />
+        <di:waypoint x="990" y="88" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="978" y="371" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_127ge0s_di" bpmnElement="TaskForwardEnvReview_PoolEnvironmentalAgency_flow">
+        <di:waypoint x="1390" y="265" />
+        <di:waypoint x="1390" y="760" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1370" y="509" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n5nr47_di" bpmnElement="PoolEnvironmentalAgency_CatchEnvOpinion_flow">
+        <di:waypoint x="1570" y="760" />
+        <di:waypoint x="1570" y="243" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1550" y="498" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0p8ly9j_di" bpmnElement="EndRejectedNoDocsMsg_PoolCitizen_flow">
+        <di:waypoint x="2030" y="178" />
+        <di:waypoint x="2030" y="427" />
+        <di:waypoint x="1320" y="427" />
+        <di:waypoint x="1320" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2022" y="298" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_147sm19_di" bpmnElement="EndRejectedEnvMsg_PoolCitizen_flow">
+        <di:waypoint x="2030" y="243" />
+        <di:waypoint x="2030" y="459" />
+        <di:waypoint x="1320" y="459" />
+        <di:waypoint x="1320" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2022" y="346" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0lisyzf_di" bpmnElement="EndRejectedTechMsg_PoolCitizen_flow">
+        <di:waypoint x="2120" y="548" />
+        <di:waypoint x="2120" y="604" />
+        <di:waypoint x="860" y="604" />
+        <di:waypoint x="860" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2112" y="570" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vcgptn_di" bpmnElement="EndPermitMsg_PoolCitizen_flow">
+        <di:waypoint x="2120" y="438" />
+        <di:waypoint x="2120" y="549" />
+        <di:waypoint x="860" y="549" />
+        <di:waypoint x="860" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2119" y="488" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

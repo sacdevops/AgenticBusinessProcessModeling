@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_BuildingPermits" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_BuildingPermits">
+    <bpmn:participant id="PoolCitizen" name="Citizen" />
+    <bpmn:participant id="PoolAuthority" name="Building Authority" processRef="Process_PoolAuthority" />
+    <bpmn:participant id="PoolEnvAgency" name="Environmental Agency" processRef="Process_PoolEnvAgency" />
+
+    <bpmn:messageFlow id="MF_SubmitApplication" name="Application" sourceRef="PoolCitizen" targetRef="StartApplicationReceived" />
+    <bpmn:messageFlow id="MF_RequestMissingDocs" name="Missing docs" sourceRef="TaskRequestMissingDocs" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="MF_ResubmitDocs" name="Documents" sourceRef="PoolCitizen" targetRef="CatchDocsReceived" />
+
+    <bpmn:messageFlow id="MF_SendToEnv" name="Review request" sourceRef="TaskSendToEnv" targetRef="StartReviewRequested" />
+    <bpmn:messageFlow id="MF_EnvOpinion" name="Opinion" sourceRef="EndOpinionSent" targetRef="CatchEnvOpinion" />
+
+    <bpmn:messageFlow id="MF_NotifyApproval" name="Approved" sourceRef="TaskNotifyApproval" targetRef="PoolCitizen" />
+    <bpmn:messageFlow id="MF_NotifyRejection" name="Rejected" sourceRef="TaskNotifyRejection" targetRef="PoolCitizen" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_PoolAuthority" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Authority">
+      <bpmn:lane id="LaneOfficial" name="Official">
+        <bpmn:flowNodeRef>StartApplicationReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskCheckCompleteness</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwComplete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskRequestMissingDocs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwWaitDocs</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchDocsReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch14Days</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskSendToEnv</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CatchEnvOpinion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwEnvPositive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskIssuePermit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskNotifyApproval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>TaskNotifyRejection</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndApprovedNotified</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndRejectedNotified</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="LaneTestEngineer" name="Test Engineer">
+        <bpmn:flowNodeRef>TaskCheckTechnical</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GwTechnicalOk</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartApplicationReceived" name="Application received">
+      <bpmn:messageEventDefinition id="MED_StartApplication" />
+      <bpmn:outgoing>Flow_A1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="TaskCheckCompleteness" name="Check completeness">
+      <bpmn:incoming>Flow_A1</bpmn:incoming>
+      <bpmn:outgoing>Flow_A2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="GwComplete" name="Complete?">
+      <bpmn:incoming>Flow_A2</bpmn:incoming>
+      <bpmn:outgoing>Flow_A3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_A4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:sendTask id="TaskRequestMissingDocs" name="Request documents">
+      <bpmn:incoming>Flow_A4</bpmn:incoming>
+      <bpmn:outgoing>Flow_A5</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:eventBasedGateway id="GwWaitDocs">
+      <bpmn:incoming>Flow_A5</bpmn:incoming>
+      <bpmn:outgoing>Flow_A6</bpmn:outgoing>
+      <bpmn:outgoing>Flow_A7</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+
+    <bpmn:intermediateCatchEvent id="CatchDocsReceived" name="Documents received">
+      <bpmn:incoming>Flow_A6</bpmn:incoming>
+      <bpmn:outgoing>Flow_A8</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MED_DocsReceived" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:intermediateCatchEvent id="Catch14Days" name="14 days exceeded">
+      <bpmn:incoming>Flow_A7</bpmn:incoming>
+      <bpmn:outgoing>Flow_A9</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TED_14Days" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:sendTask id="TaskSendToEnv" name="Send to agency">
+      <bpmn:incoming>Flow_A3</bpmn:incoming>
+      <bpmn:incoming>Flow_A8</bpmn:incoming>
+      <bpmn:outgoing>Flow_A10</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:intermediateCatchEvent id="CatchEnvOpinion" name="Opinion received">
+      <bpmn:incoming>Flow_A10</bpmn:incoming>
+      <bpmn:outgoing>Flow_A11</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MED_EnvOpinion" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:exclusiveGateway id="GwEnvPositive" name="Positive?">
+      <bpmn:incoming>Flow_A11</bpmn:incoming>
+      <bpmn:outgoing>Flow_A12</bpmn:outgoing>
+      <bpmn:outgoing>Flow_A13</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="TaskCheckTechnical" name="Check technical">
+      <bpmn:incoming>Flow_A12</bpmn:incoming>
+      <bpmn:outgoing>Flow_A14</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="GwTechnicalOk" name="OK?">
+      <bpmn:incoming>Flow_A14</bpmn:incoming>
+      <bpmn:outgoing>Flow_A15</bpmn:outgoing>
+      <bpmn:outgoing>Flow_A16</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="TaskIssuePermit" name="Issue permit">
+      <bpmn:incoming>Flow_A15</bpmn:incoming>
+      <bpmn:outgoing>Flow_A17</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sendTask id="TaskNotifyApproval" name="Notify citizen">
+      <bpmn:incoming>Flow_A17</bpmn:incoming>
+      <bpmn:outgoing>Flow_A18</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:sendTask id="TaskNotifyRejection" name="Notify citizen">
+      <bpmn:incoming>Flow_A9</bpmn:incoming>
+      <bpmn:incoming>Flow_A13</bpmn:incoming>
+      <bpmn:incoming>Flow_A16</bpmn:incoming>
+      <bpmn:outgoing>Flow_A19</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="EndApprovedNotified" name="Approved informed">
+      <bpmn:incoming>Flow_A18</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndRejectedNotified" name="Rejected informed">
+      <bpmn:incoming>Flow_A19</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_A1" sourceRef="StartApplicationReceived" targetRef="TaskCheckCompleteness" />
+    <bpmn:sequenceFlow id="Flow_A2" sourceRef="TaskCheckCompleteness" targetRef="GwComplete" />
+    <bpmn:sequenceFlow id="Flow_A3" name="Yes" sourceRef="GwComplete" targetRef="TaskSendToEnv" />
+    <bpmn:sequenceFlow id="Flow_A4" name="No" sourceRef="GwComplete" targetRef="TaskRequestMissingDocs" />
+    <bpmn:sequenceFlow id="Flow_A5" sourceRef="TaskRequestMissingDocs" targetRef="GwWaitDocs" />
+    <bpmn:sequenceFlow id="Flow_A6" sourceRef="GwWaitDocs" targetRef="CatchDocsReceived" />
+    <bpmn:sequenceFlow id="Flow_A7" sourceRef="GwWaitDocs" targetRef="Catch14Days" />
+    <bpmn:sequenceFlow id="Flow_A8" sourceRef="CatchDocsReceived" targetRef="TaskSendToEnv" />
+    <bpmn:sequenceFlow id="Flow_A9" sourceRef="Catch14Days" targetRef="TaskNotifyRejection" />
+    <bpmn:sequenceFlow id="Flow_A10" sourceRef="TaskSendToEnv" targetRef="CatchEnvOpinion" />
+    <bpmn:sequenceFlow id="Flow_A11" sourceRef="CatchEnvOpinion" targetRef="GwEnvPositive" />
+    <bpmn:sequenceFlow id="Flow_A12" name="Yes" sourceRef="GwEnvPositive" targetRef="TaskCheckTechnical" />
+    <bpmn:sequenceFlow id="Flow_A13" name="No" sourceRef="GwEnvPositive" targetRef="TaskNotifyRejection" />
+    <bpmn:sequenceFlow id="Flow_A14" sourceRef="TaskCheckTechnical" targetRef="GwTechnicalOk" />
+    <bpmn:sequenceFlow id="Flow_A15" name="Yes" sourceRef="GwTechnicalOk" targetRef="TaskIssuePermit" />
+    <bpmn:sequenceFlow id="Flow_A16" name="No" sourceRef="GwTechnicalOk" targetRef="TaskNotifyRejection" />
+    <bpmn:sequenceFlow id="Flow_A17" sourceRef="TaskIssuePermit" targetRef="TaskNotifyApproval" />
+    <bpmn:sequenceFlow id="Flow_A18" sourceRef="TaskNotifyApproval" targetRef="EndApprovedNotified" />
+    <bpmn:sequenceFlow id="Flow_A19" sourceRef="TaskNotifyRejection" targetRef="EndRejectedNotified" />
+  </bpmn:process>
+
+  <bpmn:process id="Process_PoolEnvAgency" isExecutable="false">
+    <bpmn:startEvent id="StartReviewRequested" name="Review requested">
+      <bpmn:messageEventDefinition id="MED_StartReview" />
+      <bpmn:outgoing>Flow_E1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="TaskReviewApplication" name="Review application">
+      <bpmn:incoming>Flow_E1</bpmn:incoming>
+      <bpmn:outgoing>Flow_E2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndOpinionSent" name="Opinion sent">
+      <bpmn:incoming>Flow_E2</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MED_EndOpinion" />
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_E1" sourceRef="StartReviewRequested" targetRef="TaskReviewApplication" />
+    <bpmn:sequenceFlow id="Flow_E2" sourceRef="TaskReviewApplication" targetRef="EndOpinionSent" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_BuildingPermits">
+    <bpmndi:BPMNPlane id="BPMNPlane_BuildingPermits" bpmnElement="Collaboration_BuildingPermits">
+      <bpmndi:BPMNShape id="PoolCitizen_di" bpmnElement="PoolCitizen" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1400" height="60" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="PoolAuthority_di" bpmnElement="PoolAuthority" isHorizontal="true">
+        <dc:Bounds x="160" y="190" width="1400" height="360" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneOfficial_di" bpmnElement="LaneOfficial" isHorizontal="true">
+        <dc:Bounds x="160" y="190" width="1400" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LaneTestEngineer_di" bpmnElement="LaneTestEngineer" isHorizontal="true">
+        <dc:Bounds x="160" y="370" width="1400" height="180" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartApplicationReceived_di" bpmnElement="StartApplicationReceived">
+        <dc:Bounds x="220" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="198" y="305" width="85" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TaskCheckCompleteness_di" bpmnElement="TaskCheckCompleteness">
+        <dc:Bounds x="320" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwComplete_di" bpmnElement="GwComplete" isMarkerVisible="true">
+        <dc:Bounds x="470" y="255" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="456" y="312" width="56" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TaskRequestMissingDocs_di" bpmnElement="TaskRequestMissingDocs">
+        <dc:Bounds x="590" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwWaitDocs_di" bpmnElement="GwWaitDocs">
+        <dc:Bounds x="740" y="335" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CatchDocsReceived_di" bpmnElement="CatchDocsReceived">
+        <dc:Bounds x="840" y="255" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="815" y="223" width="88" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch14Days_di" bpmnElement="Catch14Days">
+        <dc:Bounds x="840" y="405" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="808" y="448" width="100" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TaskSendToEnv_di" bpmnElement="TaskSendToEnv">
+        <dc:Bounds x="960" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CatchEnvOpinion_di" bpmnElement="CatchEnvOpinion">
+        <dc:Bounds x="1110" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1089" y="305" width="78" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwEnvPositive_di" bpmnElement="GwEnvPositive" isMarkerVisible="true">
+        <dc:Bounds x="1210" y="255" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1210" y="312" width="52" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TaskCheckTechnical_di" bpmnElement="TaskCheckTechnical">
+        <dc:Bounds x="1320" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwTechnicalOk_di" bpmnElement="GwTechnicalOk" isMarkerVisible="true">
+        <dc:Bounds x="1470" y="435" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1482" y="492" width="30" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TaskIssuePermit_di" bpmnElement="TaskIssuePermit">
+        <dc:Bounds x="1320" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TaskNotifyApproval_di" bpmnElement="TaskNotifyApproval">
+        <dc:Bounds x="1470" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndApprovedNotified_di" bpmnElement="EndApprovedNotified">
+        <dc:Bounds x="1630" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1607" y="305" width="86" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TaskNotifyRejection_di" bpmnElement="TaskNotifyRejection">
+        <dc:Bounds x="1110" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndRejectedNotified_di" bpmnElement="EndRejectedNotified">
+        <dc:Bounds x="1270" y="342" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1248" y="385" width="86" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_A1_di" bpmnElement="Flow_A1">
+        <di:waypoint x="256" y="280" />
+        <di:waypoint x="320" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A2_di" bpmnElement="Flow_A2">
+        <di:waypoint x="420" y="280" />
+        <di:waypoint x="470" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A3_di" bpmnElement="Flow_A3">
+        <di:waypoint x="520" y="280" />
+        <di:waypoint x="960" y="280" />
+        <bpmndi:BPMNLabel><dc:Bounds x="720" y="262" width="22" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A4_di" bpmnElement="Flow_A4">
+        <di:waypoint x="495" y="305" />
+        <di:waypoint x="495" y="360" />
+        <di:waypoint x="590" y="360" />
+        <bpmndi:BPMNLabel><dc:Bounds x="510" y="332" width="20" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A5_di" bpmnElement="Flow_A5">
+        <di:waypoint x="690" y="360" />
+        <di:waypoint x="740" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A6_di" bpmnElement="Flow_A6">
+        <di:waypoint x="765" y="335" />
+        <di:waypoint x="765" y="273" />
+        <di:waypoint x="840" y="273" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A7_di" bpmnElement="Flow_A7">
+        <di:waypoint x="765" y="385" />
+        <di:waypoint x="765" y="423" />
+        <di:waypoint x="840" y="423" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A8_di" bpmnElement="Flow_A8">
+        <di:waypoint x="876" y="273" />
+        <di:waypoint x="960" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A9_di" bpmnElement="Flow_A9">
+        <di:waypoint x="876" y="423" />
+        <di:waypoint x="930" y="423" />
+        <di:waypoint x="930" y="360" />
+        <di:waypoint x="1110" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A10_di" bpmnElement="Flow_A10">
+        <di:waypoint x="1060" y="280" />
+        <di:waypoint x="1110" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A11_di" bpmnElement="Flow_A11">
+        <di:waypoint x="1146" y="280" />
+        <di:waypoint x="1210" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A12_di" bpmnElement="Flow_A12">
+        <di:waypoint x="1235" y="305" />
+        <di:waypoint x="1235" y="460" />
+        <di:waypoint x="1320" y="460" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1245" y="380" width="22" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A13_di" bpmnElement="Flow_A13">
+        <di:waypoint x="1260" y="280" />
+        <di:waypoint x="1275" y="280" />
+        <di:waypoint x="1275" y="360" />
+        <di:waypoint x="1210" y="360" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1264" y="312" width="20" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A14_di" bpmnElement="Flow_A14">
+        <di:waypoint x="1420" y="460" />
+        <di:waypoint x="1470" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A15_di" bpmnElement="Flow_A15">
+        <di:waypoint x="1495" y="435" />
+        <di:waypoint x="1495" y="280" />
+        <di:waypoint x="1420" y="280" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1505" y="350" width="22" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A16_di" bpmnElement="Flow_A16">
+        <di:waypoint x="1520" y="460" />
+        <di:waypoint x="1550" y="460" />
+        <di:waypoint x="1550" y="410" />
+        <di:waypoint x="1160" y="410" />
+        <di:waypoint x="1160" y="400" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1460" y="442" width="20" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A17_di" bpmnElement="Flow_A17">
+        <di:waypoint x="1420" y="280" />
+        <di:waypoint x="1470" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A18_di" bpmnElement="Flow_A18">
+        <di:waypoint x="1570" y="280" />
+        <di:waypoint x="1630" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A19_di" bpmnElement="Flow_A19">
+        <di:waypoint x="1210" y="360" />
+        <di:waypoint x="1270" y="360" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNShape id="PoolEnvAgency_di" bpmnElement="PoolEnvAgency" isHorizontal="true">
+        <dc:Bounds x="160" y="600" width="1400" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartReviewRequested_di" bpmnElement="StartReviewRequested">
+        <dc:Bounds x="220" y="712" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="198" y="755" width="88" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TaskReviewApplication_di" bpmnElement="TaskReviewApplication">
+        <dc:Bounds x="320" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndOpinionSent_di" bpmnElement="EndOpinionSent">
+        <dc:Bounds x="470" y="712" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="450" y="755" width="78" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_E1_di" bpmnElement="Flow_E1">
+        <di:waypoint x="256" y="730" />
+        <di:waypoint x="320" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E2_di" bpmnElement="Flow_E2">
+        <di:waypoint x="420" y="730" />
+        <di:waypoint x="470" y="730" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="MF_SubmitApplication_di" bpmnElement="MF_SubmitApplication">
+        <di:waypoint x="520" y="140" />
+        <di:waypoint x="520" y="170" />
+        <di:waypoint x="238" y="170" />
+        <di:waypoint x="238" y="262" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_RequestMissingDocs_di" bpmnElement="MF_RequestMissingDocs">
+        <di:waypoint x="640" y="400" />
+        <di:waypoint x="640" y="160" />
+        <di:waypoint x="520" y="160" />
+        <di:waypoint x="520" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_ResubmitDocs_di" bpmnElement="MF_ResubmitDocs">
+        <di:waypoint x="860" y="140" />
+        <di:waypoint x="860" y="255" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="MF_SendToEnv_di" bpmnElement="MF_SendToEnv">
+        <di:waypoint x="1010" y="320" />
+        <di:waypoint x="1010" y="660" />
+        <di:waypoint x="238" y="660" />
+        <di:waypoint x="238" y="712" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_EnvOpinion_di" bpmnElement="MF_EnvOpinion">
+        <di:waypoint x="488" y="712" />
+        <di:waypoint x="488" y="580" />
+        <di:waypoint x="1128" y="580" />
+        <di:waypoint x="1128" y="298" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="MF_NotifyApproval_di" bpmnElement="MF_NotifyApproval">
+        <di:waypoint x="1520" y="240" />
+        <di:waypoint x="1520" y="160" />
+        <di:waypoint x="1200" y="160" />
+        <di:waypoint x="1200" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_NotifyRejection_di" bpmnElement="MF_NotifyRejection">
+        <di:waypoint x="1160" y="320" />
+        <di:waypoint x="1160" y="150" />
+        <di:waypoint x="900" y="150" />
+        <di:waypoint x="900" y="140" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
