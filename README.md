@@ -1,4 +1,4 @@
-# Agentic Process Modeling Tool
+# Agentic Business Process Modeling
 
 A research prototype for AI-assisted BPMN process modeling. The system employs a single, cohesive autonomous AI agent that generates, refines, and validates BPMN 2.0 diagrams directly in the browser, guided by natural language task descriptions and iterative goal-based planning.
 
