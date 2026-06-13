@@ -41,7 +41,7 @@ User ──► Autonomous Agent (PLAN → EXECUTE → SELF-REVIEW)
          BPMN Canvas (bpmn.io)
 ```
 
-All LLM input/output uses the custom **LION** serialization format. Designed to be highly compact and LLM-friendly, the notation drastically reduces data usage by 30 to 80 percent compared to conventional JSON files, minimizing context window overhead and latency.
+All LLM input/output uses our custom serialization format. Designed to be highly compact and LLM-friendly, the notation drastically reduces data usage by 30 to 80 percent compared to conventional JSON files, minimizing context window overhead and latency.
 
 ---
 
@@ -169,34 +169,34 @@ Click the **Export** button at any time to download the current BPMN diagram as 
 
 ```text
 .
-├── main.py                  # Flask application entry point
-├── config.py                # Environment config & task definitions
+├── main.py
+├── config.py
 ├── requirements.txt
 ├── .env                     # (not committed) API keys & secrets
 │
 ├── app/
-│   ├── ai_service.py        # LLM wrappers, LION parsing, action conversion
-│   ├── prompts.py           # All system prompts for the single agent
+│   ├── ai_service.py
+│   ├── prompts.py
 │   ├── sockets/
-│   │   └── chat_handler.py  # Socket event handlers and agent orchestration
+│   │   └── chat_handler.py
 │   ├── static/
 │   │   ├── css/
-│   │   └── js/task.js       # Frontend logic, bpmn.io integration
+│   │   └── js/task.js
 │   └── templates/
 │       ├── index.html
 │       └── task.html
 │
-├── lion/                    # LION serialization library
+├── lion/
 │   ├── encoder.py
 │   └── decoder.py
 │
 ├── utils/
-│   └── bpmn_validator.py    # Structural BPMN validation
+│   └── bpmn_validator.py
 │
-└── benchmarks/              # Evaluation harness (not required to run the app)
+└── benchmarks/
     ├── runner.py
     ├── bpmn_executor.py
-    └── results/             # (not committed) benchmark output files
+    └── results/
 ```
 
 ---
@@ -205,6 +205,7 @@ Click the **Export** button at any time to download the current BPMN diagram as 
 
 If you use this tool or build upon the code in your research, please cite the following:
 
+# Will be updated for the BPM Proceedings 2026
 ```bibtex
 @inproceedings{anonymous2026agentic,
   title     = {[Paper Title Placeholder]},
@@ -214,5 +215,3 @@ If you use this tool or build upon the code in your research, please cite the fo
   note      = {[Additional details placeholder]}
 }
 ```
-
-> **Anonymous review:** Author information will be added after the review process is complete.
